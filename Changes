@@ -1,0 +1,7 @@
+Revision history for Perl extension Algorithm::Networksort.
+
+0.01  Fri Jan 24 23:55:59 2003
+	- original version; created by h2xs 1.21 with options
+		-X -nAlgorithm::Networksort
+1.00  Fri Oct 17 2003
+	- Released.

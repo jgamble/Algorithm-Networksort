@@ -1,0 +1,46 @@
+Algorithm::Networksort version 1.00
+===================================
+
+This module will create sorting networks, a sequence of comparisons
+that do not depend upon the results of prior comparisons.
+
+Since the sequences and their order never change, they can be very
+useful if deployed in hardware, or used in software with a compiler
+that can take advantage of parallelism.  However, the arrangement of
+the comparisons is fixed according to the number of elements to be
+sorted, so a network cannot be used as a generic sort like
+quicksort.
+
+There are several algorithms to generate sorting networks.  This
+module has three of them:  Bose and Nelson's, Hibbard's, and
+Batcher's Merge Exchange.  It also has networks that were found
+to be superior in comparison count to those generated automatically
+by these algorithms.
+
+There is a flexible formatting function that will allow you to
+print out your network in many ways (see documentation).  There
+is also a graphical output function that will return the network
+in an encapsulated postscript, SVG, or text form.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires no other modules and libraries.  If you want
+to view the SVG output, good starting points would be Adobe's SVG
+plug-in for web browsers or Apache's Batik project for Java.
+Postscript viewing is easily accomplished with GNU's ghostview program.
+
+COPYRIGHT AND LICENSE
+
+Copyright (C) 2003 John M. Gamble. All rights reserved. This program is
+free software; you can redistribute it and/or modify it under the same
+terms as Perl itself.
+
