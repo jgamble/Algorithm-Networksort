@@ -1,4 +1,4 @@
-Algorithm::Networksort version 1.00
+Algorithm::Networksort version 1.03
 ===================================
 
 This module will create sorting networks, a sequence of comparisons
@@ -43,4 +43,3 @@ COPYRIGHT AND LICENSE
 Copyright (C) 2003 John M. Gamble. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
-

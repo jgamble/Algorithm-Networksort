@@ -6,7 +6,7 @@ my $inputs = $ARGV[0] || 8;
 my $alg = $ARGV[1] || 'hibbard';
 
 my @network = nw_comparators($inputs, algorithm => $alg);
-my @alphabase = ('a'..chr($inputs));
+my @alphabase = ('a'..'z')[0..$inputs];
 
 my $string = '[' .
 	nw_format(\@network,

@@ -8,3 +8,18 @@ Revision history for Perl extension Algorithm::Networksort.
 1.01  Sat Oct 25 2003
 	- Stupid error in my test scripts prevented them from
 	  reading the zero_one.pl file.  Fixed.
+1.02  Tue Dec 9 2003
+	- Little document formating errors bother me.
+	- Another stupid error.  Function nw_text_graph(), used
+	  by nw_graph(), was printing directly, not returning a
+	  string.  It's an old function, that's how it originally
+	  was designed.
+	- Added the graphing options (hz_margin, indent, etc.)
+	  to nw_graph().
+	- Merge in the nw_group_parallel() function (moved from
+	  parallel.pl in the eg subdirectory) into nw_group(),
+	  fairly painlessly as it turned out.
+1.03   Sat Dec 13 2003
+	- Added 'title' to the eps and svg graphing options.
+	- Added 'namespace' to the svg graphing options.  Added
+	  it to the svg.pl script in the eg subdirectory.

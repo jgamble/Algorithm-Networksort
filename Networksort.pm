@@ -22,7 +22,7 @@ our %EXPORT_TAGS = (
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.01';
+our $VERSION = '1.04';
 our $flag_internal = 0;
 
 my %nw_best = (
@@ -110,6 +110,8 @@ my %graphset = (
 	vt_margin => 21,
 	indent => 9,
 	stroke_width => 2,
+	title => undef,
+	namespace => undef,
 );
 
 #
@@ -153,19 +155,21 @@ sub nw_comparators($%)
 		return bosenelson($inputs);
 	}
 	
-	elsif ($opts{algorithm} eq 'best')
+	if ($opts{algorithm} eq 'best')
 	{
 		return @{$nw_best{$inputs}} if (exists $nw_best{$inputs});
 		carp "No 'best' network know for N = $inputs.  Using Bose-Nelson\n";
 		return bosenelson($inputs);
 	}
-	elsif ($opts{algorithm} eq 'hibbard')
+
+	if ($opts{algorithm} eq 'hibbard')
 	{
 		return hibbard($inputs) if ($inputs <= 32);
 		carp "Using Bose-Nelson instead of Hibbard, since N > 32\n";
 		return bosenelson($inputs);
 	}
-	elsif ($opts{algorithm} eq 'batcher')
+
+	if ($opts{algorithm} eq 'batcher')
 	{
 		return batcher($inputs) if ($inputs <= 32);
 		carp "Using Bose-Nelson instead of Batcher, since N > 32\n";
@@ -504,10 +508,11 @@ sub nw_format($;$$$)
 # in a single column.  This makes it easier for the nw_graph routines to
 # render a visual representation of the network.
 #
-sub nw_group($$)
+sub nw_group($$;%)
 {
 	my $network = shift;
 	my $inputs = shift;
+	my %opts = @_;
 
 	my @node_range_stack;
 	my @node_stack;
@@ -518,6 +523,16 @@ sub nw_group($$)
 	foreach my $comparator (@$network)
 	{
 		my($from, $to) = @$comparator;
+		
+		#
+		# How much of a column becomes untouchable depends upon whether
+		# we are trying to print out comparators in a single column, or
+		# whether we are just trying to arrange comparators in a single
+		# column without concern for overlap.
+		#
+		my @range = (exists $opts{grouping} and $opts{grouping} eq "parallel")?
+				($from, $to):
+				($from..$to);
 		my $col = scalar @node_range_stack;
 
 		#
@@ -526,7 +541,7 @@ sub nw_group($$)
 		#
 		while (--$col >= 0)
 		{
-			last if (grep{$_ != 0} @{$node_range_stack[$col]}[$from..$to]);
+			last if (grep{$_ != 0} @{$node_range_stack[$col]}[@range]);
 		}
 
 		#
@@ -535,19 +550,14 @@ sub nw_group($$)
 		#
 		if (++$col == scalar(@node_range_stack))
 		{
-			push @node_range_stack, 
-				[(0) x $from,
-				 (1) x ($to - $from + 1),
-				 (0) x ($inputs - $to - 1)];
+			push @node_range_stack, [(0) x $inputs];
 		}
-		else
-		{
-			@{$node_range_stack[$col]}[$from..$to] = (1) x ($to - $from + 1);
-		}
+
+		@{$node_range_stack[$col]}[@range] = (1) x (scalar @range);
 
 		#
 		# Autovivification creates the [$col] array element
-		# even if it doesn't already exist.
+		# if it doesn't currently exist.
 		#
 		push @{$node_stack[$col]}, $comparator;
 	}
@@ -557,7 +567,7 @@ sub nw_group($$)
 }
 
 #
-# $string = nw_graph(\@network, $inputs, graph=> 'text|eps|svg');
+# $string = nw_graph(\@network, $inputs, %options);
 #
 # Returns a string that contains the network in a graphical format.
 #
@@ -575,14 +585,26 @@ sub nw_graph($$;%)
 
 	if (!exists $print_opts{graph} or $print_opts{graph} eq "text")
 	{
+		foreach my $k (keys %textset)
+		{
+			$print_opts{$k} = $textset{$k} unless (exists $print_opts{$k});
+		}
 		return nw_text_graph($network, $inputs, %print_opts);
 	}
 	elsif ($print_opts{graph} eq "eps")
 	{
+		foreach my $k (keys %graphset)
+		{
+			$print_opts{$k} = $graphset{$k} unless (exists $print_opts{$k});
+		}
 		return nw_eps_graph($network, $inputs, %print_opts);
 	}
 	elsif ($print_opts{graph} eq "svg")
 	{
+		foreach my $k (keys %graphset)
+		{
+			$print_opts{$k} = $graphset{$k} unless (exists $print_opts{$k});
+		}
 		return nw_svg_graph($network, $inputs, %print_opts);
 	}
 
@@ -593,14 +615,13 @@ sub nw_graph($$;%)
 #
 # $string = nw_eps_graph(\@network, $inputs, %graphing_options);
 #
-# Returns a string that contains the network in an EPS format.  The
-# %graphing_options hash is unused for now.
+# Returns a string that contains the network in an EPS format.
 #
 sub nw_eps_graph($$%)
 {
 	my $network = shift;
 	my $inputs = shift;
-	my %graphing_options = @_;
+	my %grset = @_;
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
@@ -609,16 +630,19 @@ sub nw_eps_graph($$%)
 
 	for (my $idx = 0; $idx < $inputs; $idx++)
 	{
-		$vcoord[$idx] = $idx * ($graphset{vt_sep} + $graphset{stroke_width}) + $graphset{vt_margin};
+		$vcoord[$idx] = $idx * ($grset{vt_sep} + $grset{stroke_width}) +
+			$grset{vt_margin};
 	}
 
 	for (my $idx = 0; $idx < $columns; $idx++)
 	{
-		$hcoord[$idx] = $idx * ($graphset{hz_sep} + $graphset{stroke_width}) + $graphset{hz_margin} + $graphset{indent};
+		$hcoord[$idx] = $idx * ($grset{hz_sep} + $grset{stroke_width}) +
+			$grset{hz_margin} + $grset{indent};
 	}
 
-	my $xbound = $hcoord[$columns - 1] + $graphset{hz_margin} + $graphset{indent};
-	my $ybound = $vcoord[$inputs - 1] + $graphset{vt_margin};
+	my $xbound = $hcoord[$columns - 1] + $grset{hz_margin} + $grset{indent};
+	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
+	my $title = $grset{title} || "N = $inputs Sorting Network.";
 
 	#
 	# A long involved piece to create the necessary DSC, the subroutine
@@ -629,7 +653,7 @@ sub nw_eps_graph($$%)
 		"%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 $xbound $ybound\n%%CreationDate: " .
 		localtime() .
 		"\n%%Creator: perl module " . __PACKAGE__ . " version $VERSION." .
-		"\n%%Title: N = $inputs Sorting Network.\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n" .
+		"\n%%Title: $title\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n" .
 q(
 % column inputline1 inputline2 draw-comparatorline
 /draw-comparatorline {
@@ -650,15 +674,15 @@ q(
 		"/vcoord [" .
 		join("\n    ", semijoin(' ', 16, @vcoord)) . "] def\n/hcoord [" .
 		join("\n    ", semijoin(' ', 16, @hcoord)) . "] def\n\n" .
-		"/leftmargin $graphset{hz_margin} def\n/rightmargin " .
-		($xbound - $graphset{hz_margin}) . " def\n\n";
+		"/leftmargin $grset{hz_margin} def\n/rightmargin " .
+		($xbound - $grset{hz_margin}) . " def\n\n";
 
 	#
 	# Save the current graphics state, then change the default line width,
 	# and the drawing coordinates from (0,0) = lower left to an upper left
 	# origin.
 	#
-	$string .= "gsave\n$graphset{stroke_width} setlinewidth\n0 $ybound translate\n1 -1 scale\n";
+	$string .= "gsave\n$grset{stroke_width} setlinewidth\n0 $ybound translate\n1 -1 scale\n";
 
 	#
 	# Draw the input lines.
@@ -691,49 +715,62 @@ q(
 # Return a graph of the network in Scalable Vector Graphics.
 # Measurements are in pixels. 0,0 is the upper left corner.
 #
-# %graphing_options hash is unused for now.
-#
 sub nw_svg_graph($$%)
 {
 	my $network = shift;
 	my $inputs = shift;
-	my %graphing_options = @_;
+	my %grset = @_;
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
 	my(@vcoord, @hcoord);
+	my($ns, $string);
 
 	for (my $idx = 0; $idx < $inputs; $idx++)
 	{
-		$vcoord[$idx] = $idx * ($graphset{vt_sep} + $graphset{stroke_width}) +
-			$graphset{vt_margin};
+		$vcoord[$idx] = $idx * ($grset{vt_sep} + $grset{stroke_width}) +
+			$grset{vt_margin};
 	}
 
 	for (my $idx = 0; $idx < $columns; $idx++)
 	{
-		$hcoord[$idx] = $idx * ($graphset{hz_sep} + $graphset{stroke_width}) +
-			$graphset{hz_margin} + $graphset{indent};
+		$hcoord[$idx] = $idx * ($grset{hz_sep} + $grset{stroke_width}) +
+			$grset{hz_margin} + $grset{indent};
 	}
 
-	my $string = "<svg width=\"" . ($hcoord[$columns - 1] + $graphset{hz_margin} + $graphset{indent}) .
-			"\" height=\"" . ($vcoord[$inputs - 1] + $graphset{vt_margin}) . "\">\n" .
-	                "    <desc>\n" .
+	my $xbound = $hcoord[$columns - 1] + $grset{hz_margin} + $grset{indent};
+	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
+	my $title = $grset{title} || "N = $inputs Sorting Network.";
+
+	if (defined $grset{namespace})
+	{
+		$string = "<$grset{namespace}:svg xmlns:$grset{namespace}=\"http://www.w3.org/2000/svg\" " .
+			"width=\"$xbound\" height=\"$ybound\">\n";
+		$ns = $grset{namespace} . ":";
+	}
+	else
+	{
+		$string = "<svg width=\"$xbound\" height=\"$ybound\">\n";
+		$ns = "";
+	}
+
+	$string .= "    <" . $ns . "desc>\n" .
 			"        CreationDate: " . localtime() . "\n" .
 			"        Creator: perl module " . __PACKAGE__ . " version $VERSION.\n" .
-			"    </desc>\n    <title>N = $inputs Sorting Network.</title>\n";
+			"    </" . $ns . "desc>\n    <" . $ns . "title>$title</" . $ns . "title>\n";
 
 	#
 	# Define the input line template.
 	#
-	$string .= "    <defs>\n";
+	$string .= "    <" . $ns . "defs>\n";
 	$string .= "        <!-- Define the input lines. -->\n";
-	$string .= "        <g id=\"inputline\" style=\"fill:none; stroke:black; stroke-width:$graphset{stroke_width}\" >\n";
-	$string .= "            <desc>Input line.</desc>\n";
-	$string .= "            <circle cx=\"$graphset{hz_margin}\" cy=\"0\" r=\"$graphset{stroke_width}\" />\n";
-	$string .= "            <line x1=\"$graphset{hz_margin}\" y1=\"0\" x2=\"" .
-				($hcoord[$columns - 1] + $graphset{indent}) . "\" y2=\"0\" />\n";
-	$string .= "            <circle cx=\"" . ($hcoord[$columns - 1] + $graphset{indent}) .
-				"\" cy=\"0\" r=\"$graphset{stroke_width}\" />\n";
+	$string .= "        <" . $ns . "g id=\"inputline\" style=\"fill:none; stroke:black; stroke-width:$grset{stroke_width}\" >\n";
+	$string .= "            <" . $ns . "desc>Input line.</" . $ns . "desc>\n";
+	$string .= "            <" . $ns . "circle cx=\"$grset{hz_margin}\" cy=\"0\" r=\"$grset{stroke_width}\" />\n";
+	$string .= "            <" . $ns . "line x1=\"$grset{hz_margin}\" y1=\"0\" x2=\"" .
+				($hcoord[$columns - 1] + $grset{indent}) . "\" y2=\"0\" />\n";
+	$string .= "            <" . $ns . "circle cx=\"" . ($hcoord[$columns - 1] + $grset{indent}) .
+				"\" cy=\"0\" r=\"$grset{stroke_width}\" />\n";
 	$string .= "        </g>\n";
 	$string .= "        <!-- Now the comparator lines, which come in different lengths. -->\n";
 
@@ -750,22 +787,22 @@ sub nw_svg_graph($$%)
 			my $endpoint = $vcoord[$to] - $vcoord[$from];
 			$cmptr_defd{$cmptr_len} = 1;
 			$string .=
-			"        <g id=\"comparator$cmptr_len\" style=\"fill:black; stroke:black; stroke-width:$graphset{stroke_width}\" >\n" .
-			"            <desc>Comparator size $cmptr_len.</desc>\n" .
-			"            <circle cx=\"0\" cy=\"0\" r=\"$graphset{stroke_width}\" />\n" .
-			"            <line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"$endpoint\" />\n" .
-			"            <circle cx=\"0\" cy=\"$endpoint\" r=\"$graphset{stroke_width}\" />\n" .
-			"        </g>\n";
+			"        <" . $ns . "g id=\"comparator$cmptr_len\" style=\"fill:black; stroke:black; stroke-width:$grset{stroke_width}\" >\n" .
+			"            <" . $ns . "desc>Comparator size $cmptr_len.</" . $ns . "desc>\n" .
+			"            <" . $ns . "circle cx=\"0\" cy=\"0\" r=\"$grset{stroke_width}\" />\n" .
+			"            <" . $ns . "line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"$endpoint\" />\n" .
+			"            <" . $ns . "circle cx=\"0\" cy=\"$endpoint\" r=\"$grset{stroke_width}\" />\n" .
+			"        </" . $ns . "g>\n";
 		}
 	}
 
 	#
 	# End of definitions.  Draw the input lines.
 	#
-	$string .= "    </defs>\n\n    <!-- Draw the input lines. -->\n";
+	$string .= "    </" . $ns . "defs>\n\n    <!-- Draw the input lines. -->\n";
 	for (my $idx = 0; $idx < $inputs; $idx++)
 	{
-		$string .= "    <use xlink:href=\"#inputline\" y = \"" . $vcoord[$idx] . "\" />\n";
+		$string .= "    <" . $ns . "use xlink:href=\"#inputline\" y = \"" . $vcoord[$idx] . "\" />\n";
 	}
 
 	#
@@ -782,13 +819,13 @@ sub nw_svg_graph($$%)
 			my($from, $to) = @$comparator;
 			my $cmptr_len = $to - $from;
 
-			$string .= "    <use xlink:href=\"#comparator$cmptr_len\" x = \"" .
+			$string .= "    <" . $ns . "use xlink:href=\"#comparator$cmptr_len\" x = \"" .
 					$hcoord[$hidx] . "\" y = \"" . $vcoord[$from] . "\" />\n";
 		}
 		$hidx++;
 	}
 
-	$string .= "</svg>\n";
+	$string .= "</" . $ns . "svg>\n";
 	return $string;
 }
 
@@ -797,13 +834,11 @@ sub nw_svg_graph($$%)
 #
 # Return a graph of the network in text.
 #
-# %graphing_options hash is unused for now.
-#
 sub nw_text_graph($$%)
 {
 	my $network = shift;
 	my $inputs = shift;
-	my %graphing_options = @_;
+	my %txset = @_;
 
 	my @node_stack = nw_group($network, $inputs);
 	my $column = 0;
@@ -837,7 +872,7 @@ sub nw_text_graph($$%)
 		#
 		# Begin with the input line...
 		#
-		print $textset{inputbegin};
+		$string .= $txset{inputbegin};
 
 		for my $col (0..$column-1)
 		{
@@ -845,34 +880,34 @@ sub nw_text_graph($$%)
 
 			if ($node_column[$row] == 0)
 			{
-				print $textset{($column_line[$col] == 1)? 'inputcompline': 'inputline'};
+				$string .= $txset{($column_line[$col] == 1)? 'inputcompline': 'inputline'};
 			}
 			elsif ($node_column[$row] == 1)
 			{
-				print $textset{fromcomp};
+				$string .= $txset{fromcomp};
 			}
 			else
 			{
-				print $textset{tocomp};
+				$string .= $txset{tocomp};
 			}
 			$column_line[$col] += $node_column[$row];
 		}
 
-		print $textset{inputend};
+		$string .= $txset{inputend};
 
 		#
 		# Now print the space in between input lines.
 		#
 		if ($row != $inputs-1)
 		{
-			print $textset{gapbegin};
+			$string .= $txset{gapbegin};
 
 			for my $col (0..$column -1)
 			{
-				print $textset{($column_line[$col] == 0)? 'gapnone': 'gapcompline'};
+				$string .= $txset{($column_line[$col] == 0)? 'gapnone': 'gapcompline'};
 			}
 
-			print $textset{gapend};
+			$string .= $txset{gapend};
 		}
 	}
 
@@ -962,17 +997,17 @@ functions, or templates) that one may insert into source code. It may
 also be used to create images of the networks in either encapsulated
 postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
-=head2 EXPORT
+=head2 Export
 
 None by default. There is only one available export tag, ':all', which
 exports the functions to create and use sorting networks. The functions are
 nw_comparator(), nw_format(), nw_graph(), nw_group(), and nw_sort().
 
-=head1 Functions
+=head2 Functions
 
 =over 4
 
-=item nw_comparator
+=item nw_comparator()
 
     @network = nw_comparator($inputs);
 
@@ -986,7 +1021,7 @@ will be in the arrangement of the comparators, not in their number.
 
 The choices for B<algorithm> are
 
-=over 4
+=over 2
 
 =item 'bosenelson'
 
@@ -1005,6 +1040,11 @@ Use Batcher's Merge Exchange algorithm. Batcher's algorithm also makes use of
 bit placement, and like Hibbard's algorithm it will fall back to Bose-Nelson
 if more than 32 elements are specified.
 
+Merge Exchange is a real sort, in that in its usual form (for example, as
+described in Knuth) it can handle a variety of inputs. But when sorting
+it always generates the same comparison pairs for a given input size,
+which lends itself to network sorting.
+
 =item 'best'
 
 For some inputs, networks have been discovered that are more efficient
@@ -1022,7 +1062,7 @@ will fall back to Bose-Nelson.
 
 =back
 
-=item nw_format
+=item nw_format()
 
     $string = nw_format(\@network, $format1, $format2, \@index_base);
 
@@ -1068,7 +1108,7 @@ Example 4: you want a series of comparison and swap statements.
 
 Example 5: you want the default format to use letters, not numbers.
 
-    my @alphabase = ('a'..chr($inputs));
+    my @alphabase = ('a'..'z')[0..$inputs];
 
     my $string = '[' .
             nw_format(\@network,
@@ -1076,11 +1116,11 @@ Example 5: you want the default format to use letters, not numbers.
 		undef,
 		\@alphabase);
 
-substr($string, -1, 1) = ']';    # Overwrite the trailing comma.
-print $string;
+    substr($string, -1, 1) = ']';    # Overwrite the trailing comma.
+    print $string;
 
 
-=item nw_graph
+=item nw_graph()
 
 Returns a string that graphs out the comparators in a network. The format
 may be encapsulated postscript (graph=>'eps'), scalar vector graphics
@@ -1099,38 +1139,150 @@ to be combined with XML code in order to be viewed.
 	"svg-20001102.dtd\">\n",
 	$netgraph;
 
-=item nw_group
+The 'graph' option is not the only one available. The graphing can be
+adjusted to your needs using the following options.
+
+=head2 Options for 'svg' only.
+
+=over 2
+
+=item namespace
+
+A tag prefix that allows programs to distinguish between different XML
+vocabularies that have the same tag. Default value undef.
+
+=back
+
+=head2 Options for 'svg' and 'eps' graphs
+
+=over 2
+
+=item hz_sep
+
+The spacing separating the horizontal lines (the input lines). Default value 12.
+
+=item hz_margin
+
+The horizontal spacing between the edges of the graphic and the network. Default value 18.
+
+=item vt_sep
+
+The spacing separating the vertical lines (the comparators). Default value 12.
+
+=item vt_margin
+
+The vertical spacing between the edges of the graphic and the network.  Default value 21.
+
+=item indent
+
+The indention between the start of the input lines and the placement of the first comparator.
+The same value spaces the placement of the final comparator and the end of the input lines.
+Default value 9.
+
+=item stroke_width
+
+Width of the lines used to define comparators and input lines.  Also represents the radii of
+the endpoint circles. Default value 2.
+
+=item title
+
+Title of the graph. It should a short one-line description. Default value
+"N = $inputs Sorting Network."
+
+=back
+
+=head2 Options for the 'text' graph
+
+=over 2
+
+=item inputbegin
+
+The starting characters for the input line. Default value "o-".
+
+=item inputline
+
+The characters that make up an input line. Default value "---".
+
+=item inputcompline
+
+The characters that make up an input line that has a comparator crossing over it.
+Default value "-|-".
+
+=item inputend
+
+The characters that make up the end of an input line. Default value "-o\n".
+
+=item fromcomp
+
+The characters that make up an input line with the starting point of
+a comparator. Default value "-^-".
+
+=item tocomp
+
+The characters that make up an input line with the end point of
+a comparator. Default value "-v-".
+
+=item gapbegin
+
+The characters that start the gap between the input lines. Default value "  " (two spaces).
+
+=item gapcompline
+
+The characters that make up the gap with a comparator passing through. Default value " | " (space vertical
+bar space).
+
+=item gapnone
+
+The characters that make up the space between the input lines. Default value "  " (three spaces).
+
+=item gapend
+
+The characters that end the gap between the input lines. Default value "  \n" (two spaces and a newline).
+
+=back
+
+=item nw_group()
 
 This is a function called by nw_graph(). The function takes
 the comparator list and returns a list of comparator lists, each sub-list
 representing a group of comparators that can be printed in a single column.
+There is one option available, 'grouping', that will produce a grouping that
+represents parallel operations of comparators.
 
 The chances that you will need to use it are slim, but the following code snippet
 may represent an example:
 
-    my $inputs = 4;
+    my $inputs = 8;
     my @network = nw_comparators($inputs);
-    print nw_format(\@network);
-    my @grouped_network = nw_group(\@network, $inputs);
+    my @grouped_network = nw_group(\@network, $inputs, grouping=>'parallel');
 
-    print "There are ", scalar @grouped_network,
-          " columns in the printed network\n\n";
+    print "There are ", scalar @network,
+        " comparators in this network, grouped into\n",
+        scalar @grouped_network, " parallel operations.\n\n";
 
     foreach my $group (@grouped_network)
     {
         print nw_format($group), "\n";
     }
 
+    @grouped_network = nw_group(\@network, $inputs);
+    print "\nThis will be graphed in ", scalar @grouped_network,
+        " columns.\n";
+
 This will produce:
 
-    There are 4 columns in the printed network
+    There are 19 comparators in this network, grouped into 6 parallel operations.
 
-    [[0,1],[2,3]]
-    [[0,2]]
-    [[1,3]]
-    [[1,2]]
+    [[0,4],[1,5],[2,6],[3,7]]
+    [[0,2],[1,3],[4,6],[5,7]]
+    [[2,4],[3,5],[0,1],[6,7]]
+    [[2,3],[4,5]]
+    [[1,4],[3,6]]
+    [[1,2],[3,4],[5,6]]
 
-=item nw_sort
+    This will be graphed in 11 columns.
+
+=item nw_sort()
 
 Sort an array using the network. This is meant for testing purposes
 only - looping around an array of comparators in order to sort an
@@ -1170,9 +1322,9 @@ Joseph Celko, "Bose-Nelson Sort", Doctor Dobb's Journal, September 1985.
 
 =back
 
-=over 2
-
 =head2 Hibbard's algorithm.
+
+=over 2
 
 =item
 
