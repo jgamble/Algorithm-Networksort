@@ -18,5 +18,6 @@ eg/fmt03.pl
 eg/fmt04.pl
 eg/fmt05.pl
 eg/parallel.pl
-eg/svg.pl
+eg/svg00.pl
+eg/svg01.pl
 eg/text.pl

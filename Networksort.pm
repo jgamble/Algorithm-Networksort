@@ -22,7 +22,7 @@ our %EXPORT_TAGS = (
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 our $flag_internal = 0;
 
 my %nw_best = (
@@ -37,7 +37,8 @@ my %nw_best = (
 	  [1,2], [4,6], [7,8], [3,5], [2,5], [6,8], [1,3], [4,7],
 	  [2,3], [6,7], [3,4], [5,6], [4,5]]),
 
-	(11,	# 12-input by Shapiro and Green, minus the connections to a twelfth input.
+	(11,	# 12-input by Shapiro and Green, minus the connections
+		# to a twelfth input.
 	 [[0,1], [2,3], [4,5], [6,7], [8,9],
 	  [1,3], [5,7], [0,2], [4,6], [8,10],
 	  [1,2], [5,6], [9,10], [1,5], [6,10],
@@ -101,7 +102,7 @@ my %nw_best = (
 );
 
 #
-# Parameters for SVG and postscript graphing.
+# Parameters for SVG and EPS graphing.
 #
 my %graphset = (
 	hz_sep => 12,
@@ -164,16 +165,12 @@ sub nw_comparators($%)
 
 	if ($opts{algorithm} eq 'hibbard')
 	{
-		return hibbard($inputs) if ($inputs <= 32);
-		carp "Using Bose-Nelson instead of Hibbard, since N > 32\n";
-		return bosenelson($inputs);
+		return hibbard($inputs);
 	}
 
 	if ($opts{algorithm} eq 'batcher')
 	{
-		return batcher($inputs) if ($inputs <= 32);
-		carp "Using Bose-Nelson instead of Batcher, since N > 32\n";
-		return bosenelson($inputs);
+		return batcher($inputs);
 	}
 
 	carp "Unknown algorithm '", $opts{algorithm}, "'\n";
@@ -523,7 +520,7 @@ sub nw_group($$;%)
 	foreach my $comparator (@$network)
 	{
 		my($from, $to) = @$comparator;
-		
+
 		#
 		# How much of a column becomes untouchable depends upon whether
 		# we are trying to print out comparators in a single column, or
@@ -771,7 +768,7 @@ sub nw_svg_graph($$%)
 				($hcoord[$columns - 1] + $grset{indent}) . "\" y2=\"0\" />\n";
 	$string .= "            <" . $ns . "circle cx=\"" . ($hcoord[$columns - 1] + $grset{indent}) .
 				"\" cy=\"0\" r=\"$grset{stroke_width}\" />\n";
-	$string .= "        </g>\n";
+	$string .= "        </" . $ns . "g>\n";
 	$string .= "        <!-- Now the comparator lines, which come in different lengths. -->\n";
 
 	#
@@ -986,13 +983,13 @@ This module will create sorting networks, a sequence of comparisons
 that do not depend upon the results of prior comparisons.
 
 Since the sequences and their order never change, they can be very
-useful if deployed in hardware, or used in software with a compiler
-that can take advantage of parallelism. However, the arrangement of
+useful if deployed in hardware or used in software with a compiler
+that can take advantage of parallelism. Unfortunately a network cannot be
+used for generic run-time sorting like quicksort since the arrangement of
 the comparisons is fixed according to the number of elements to be
-sorted, so a network cannot be used for generic run-time sorting like
-quicksort.
+sorted.
 
-The module's main purpose is to create compare-and-swap macros (or
+This module's main purpose is to create compare-and-swap macros (or
 functions, or templates) that one may insert into source code. It may
 also be used to create images of the networks in either encapsulated
 postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
@@ -1026,24 +1023,21 @@ The choices for B<algorithm> are
 =item 'bosenelson'
 
 Use the Bose-Nelson algorithm to generate the network. This is the most
-commonly implemented algorithm.
+commonly implemented algorithm, recursive and simple to code.
 
 =item 'hibbard'
 
-Use Hibbard's algorithm. Hibbard's algorithm makes use of bit placement in
-integers. Currently, plain old 32-bit integers are used. If you specify
-'hibbard' with more than 32 elements the module will fall back to Bose-Nelson.
+Use Hibbard's algorithm. This iterative algorithm was developed after the
+Bose-Nelson algorithm was published, and produces a different network
+"... for generating the comparisons one by one in the order in which
+they are needed for sorting," according to his article (see below).
 
 =item 'batcher'
 
-Use Batcher's Merge Exchange algorithm. Batcher's algorithm also makes use of
-bit placement, and like Hibbard's algorithm it will fall back to Bose-Nelson
-if more than 32 elements are specified.
-
-Merge Exchange is a real sort, in that in its usual form (for example, as
-described in Knuth) it can handle a variety of inputs. But when sorting
-it always generates the same comparison pairs for a given input size,
-which lends itself to network sorting.
+Use Batcher's Merge Exchange algorithm. Merge Exchange is a real sort, in
+that in its usual form (for example, as described in Knuth) it can handle
+a variety of inputs. But when sorting it always generates the same
+comparison pairs for a given input size, which lends itself to network sorting.
 
 =item 'best'
 
@@ -1148,8 +1142,9 @@ adjusted to your needs using the following options.
 
 =item namespace
 
+I<Default value: undef.>
 A tag prefix that allows programs to distinguish between different XML
-vocabularies that have the same tag. Default value undef.
+vocabularies that have the same tag. If undefined, no tag is used.
 
 =back
 
@@ -1157,37 +1152,44 @@ vocabularies that have the same tag. Default value undef.
 
 =over 2
 
-=item hz_sep
-
-The spacing separating the horizontal lines (the input lines). Default value 12.
-
 =item hz_margin
 
-The horizontal spacing between the edges of the graphic and the network. Default value 18.
+I<Default value: 18.>
+The horizontal spacing between the edges of the graphic and the
+network.
 
-=item vt_sep
+=item hz_sep
 
-The spacing separating the vertical lines (the comparators). Default value 12.
-
-=item vt_margin
-
-The vertical spacing between the edges of the graphic and the network.  Default value 21.
+I<Default value: 12.>
+The spacing separating the horizontal lines (the input lines).
 
 =item indent
 
-The indention between the start of the input lines and the placement of the first comparator.
-The same value spaces the placement of the final comparator and the end of the input lines.
-Default value 9.
+I<Default value: 9.>
+The indention between the start of the input lines and the placement of
+the first comparator. The same value spaces the placement of the final
+comparator and the end of the input lines.
 
 =item stroke_width
 
-Width of the lines used to define comparators and input lines.  Also represents the radii of
-the endpoint circles. Default value 2.
+I<Default value: 2.>
+Width of the lines used to define comparators and input lines. Also
+represents the radii of the endpoint circles.
 
 =item title
 
-Title of the graph. It should a short one-line description. Default value
-"N = $inputs Sorting Network."
+I<Default value: "N = $inputs Sorting Network.">
+Title of the graph. It should be a short one-line description.
+
+=item vt_margin
+
+I<Default value: 21.>
+The vertical spacing between the edges of the graphic and the network.
+
+=item vt_sep
+
+I<Default value: 12.>
+The spacing separating the vertical lines (the comparators).
 
 =back
 
@@ -1197,47 +1199,56 @@ Title of the graph. It should a short one-line description. Default value
 
 =item inputbegin
 
-The starting characters for the input line. Default value "o-".
+I<Default value: "o-".>
+The starting characters for the input line.
 
 =item inputline
 
-The characters that make up an input line. Default value "---".
+I<Default value: "---".>
+The characters that make up an input line.
 
 =item inputcompline
 
-The characters that make up an input line that has a comparator crossing over it.
-Default value "-|-".
+I<Default value: "-|-".>
+The characters that make up an input line that has a comparator crossing
+over it.
 
 =item inputend
 
-The characters that make up the end of an input line. Default value "-o\n".
+I<Default value: "-o\n".>
+The characters that make up the end of an input line.
 
 =item fromcomp
 
+I<Default value: "-^-".>
 The characters that make up an input line with the starting point of
-a comparator. Default value "-^-".
+a comparator.
 
 =item tocomp
 
+I<Default value: "-v-".>
 The characters that make up an input line with the end point of
-a comparator. Default value "-v-".
+a comparator.
 
 =item gapbegin
 
-The characters that start the gap between the input lines. Default value "  " (two spaces).
+I<Default value: "  " (two spaces).>
+The characters that start the gap between the input lines.
 
 =item gapcompline
 
-The characters that make up the gap with a comparator passing through. Default value " | " (space vertical
-bar space).
+I<Default value: " | " (space vertical bar space).>
+The characters that make up the gap with a comparator passing through.
 
 =item gapnone
 
-The characters that make up the space between the input lines. Default value "  " (three spaces).
+I<Default value: "  " (three spaces).>
+The characters that make up the space between the input lines.
 
 =item gapend
 
-The characters that end the gap between the input lines. Default value "  \n" (two spaces and a newline).
+I<Default value: "  \n" (two spaces and a newline).>
+The characters that end the gap between the input lines.
 
 =back
 
@@ -1298,10 +1309,6 @@ This function uses the C<< <=> >> operator for comparisons.
 
 =back
 
-=head1 AUTHOR
-
-John M. Gamble, C<< <jgamble@ripco.com> >>
-
 =head1 SEE ALSO
 
 =head2 Bose and Nelson's algorithm.
@@ -1344,7 +1351,7 @@ The Art of Computer Programming, Vol. 3, section 5.2.2.
 Batcher has written two other sorting algorithms that can generate network
 sorting pairs, the "Odd-Even" algorithm and the "Bitonic" algorithm. His paper
 on them can be found on his web site:
-L<http://trident.mcs.kent.edu/~batcher/|http://trident.mcs.kent.edu/~batcher/>.
+L<http://trident.mcs.kent.edu/~batcher/>.
 
 Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
 AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114. 
@@ -1352,7 +1359,7 @@ AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114.
 =item
 
 Forbes D. Lewis, "Sorting Networks"
-L<http://cs.engr.uky.edu/~lewis/essays/algorithms/sortnets/sort-net.html|http://cs.engr.uky.edu/~lewis/essays/algorithms/sortnets/sort-net.html>
+L<http://cs.engr.uky.edu/~lewis/essays/algorithms/sortnets/sort-net.html>
 
 =back
 
@@ -1363,12 +1370,12 @@ L<http://cs.engr.uky.edu/~lewis/essays/algorithms/sortnets/sort-net.html|http://
 =item
 
 Ian Parberry, "A computer assisted optimal depth lower bound for sorting networks with nine inputs", 
-L<http://hercule.csci.unt.edu/~ian/papers/9-input.ps|http://hercule.csci.unt.edu/~ian/papers/9-input.ps>.
+L<http://hercule.csci.unt.edu/~ian/papers/9-input.ps>.
 
 =item
 
 The Evolving Non-Determinism (END) algorithm has found more efficient networks:
-L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html|http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
+L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
 
 =back
 
@@ -1388,5 +1395,9 @@ T. H. Cormen, E. E. Leiserson, R. L. Rivest, Introduction to Algorithms,
 McGraw-Hill, 1990.
 
 =back
+
+=head1 AUTHOR
+
+John M. Gamble may be found at B<jgamble@ripco.com>
 
 =cut

@@ -16,10 +16,21 @@ Revision history for Perl extension Algorithm::Networksort.
 	  was designed.
 	- Added the graphing options (hz_margin, indent, etc.)
 	  to nw_graph().
-	- Merge in the nw_group_parallel() function (moved from
+	- Merged in the nw_group_parallel() function (moved from
 	  parallel.pl in the eg subdirectory) into nw_group(),
 	  fairly painlessly as it turned out.
 1.03   Sat Dec 13 2003
 	- Added 'title' to the eps and svg graphing options.
+1.04   Sun Dec 14 2003
 	- Added 'namespace' to the svg graphing options.  Added
 	  it to the svg.pl script in the eg subdirectory.
+1.05   Thu Jan 22 2004
+	- Missing namespace in ending </g> tag for inputline definition.
+	- For some reason, I took the input value for hibbard() and
+	  batcher() to be the bit count, and restricted it to 32.  I
+	  claim tiredness and caffeine overload.  The restriction is
+	  removed, and you could have an input of 2**32 if you want,
+	  although you'd be waiting a long time for a result.
+	- Fixed L<> tags in the documentation.
+	- In the eg directory, renamed svg.pl to svg00.pl, and added
+	  svg01.pl for the XHTML version.
