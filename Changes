@@ -5,3 +5,6 @@ Revision history for Perl extension Algorithm::Networksort.
 		-X -nAlgorithm::Networksort
 1.00  Fri Oct 17 2003
 	- Released.
+1.01  Sat Oct 25 2003
+	- Stupid error in my test scripts prevented them from
+	  reading the zero_one.pl file.  Fixed.

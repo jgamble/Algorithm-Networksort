@@ -22,7 +22,7 @@ our %EXPORT_TAGS = (
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our $flag_internal = 0;
 
 my %nw_best = (

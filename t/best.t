@@ -6,7 +6,7 @@
 use Test;
 BEGIN { plan tests => 9 };
 use Algorithm::Networksort qw(:all);
-require "zero_one.pl";
+require "t/zero_one.pl";
 ok(1); 
 
 #########################
