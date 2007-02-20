@@ -1,17 +1,21 @@
 package Algorithm::Networksort;
 
-use Carp;
 use 5.006;
-use strict;
 use warnings;
+#use 5.005;
+use vars qw(@ISA $VERSION $flag_internal %EXPORT_TAGS @EXPORT_OK);
+
+use strict;
 use integer;
+use Carp;
 
 require Exporter;
 
-our @ISA = qw(Exporter);
+@ISA = qw(Exporter);
 
-our %EXPORT_TAGS = (
+%EXPORT_TAGS = (
 	'all' => [ qw(
+		nw_color
 		nw_graph
 		nw_group
 		nw_comparators
@@ -20,10 +24,10 @@ our %EXPORT_TAGS = (
 	) ],
 );
 
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.05';
-our $flag_internal = 0;
+$VERSION = '1.07';
+$flag_internal = 0;
 
 my %nw_best = (
 	(9,	# R. W. Floyd.
@@ -65,7 +69,7 @@ my %nw_best = (
 	  [4,6],
 	  [2,3], [4,5], [6,7], [8,9], [3,4], [5,6]]),
 
-	(14,	# Green's construction for 16 inputs minus comparators for
+	(14,	# Green's construction for 16 inputs minus connections to
 		# the fifteenth and sixteenth inputs.
 	 [[0,1], [2,3], [4,5], [6,7], [8,9], [10,11], [12,13],
 	  [0,2], [4,6], [8,10], [1,3], [5,7], [9,11],
@@ -77,7 +81,7 @@ my %nw_best = (
 	  [6,8], [10,12], [3,5], [7,9],
 	  [3,4], [5,6], [7,8], [9,10], [11,12], [6,7], [8,9]]),
 
-	(15,	# Green's construction for 16 inputs minus comparators for
+	(15,	# Green's construction for 16 inputs minus connections to
 		# the sixteenth input.
 	 [[0,1], [2,3], [4,5], [6,7], [8,9], [10,11], [12,13],
 	  [0,2], [4,6], [8,10], [12,14], [1,3], [5,7], [9,11],
@@ -102,6 +106,16 @@ my %nw_best = (
 );
 
 #
+# Names for the algorithm keys.
+#
+my %algname = (
+	bosenelson => "Bose-Nelson",
+	batcher => "Batcher's Mergesort",
+	hibbard => "Hibbard",
+	best => "Best Known",
+);
+
+#
 # Parameters for SVG and EPS graphing.
 #
 my %graphset = (
@@ -116,6 +130,20 @@ my %graphset = (
 );
 
 #
+# Color parameters.
+#
+my %colorset = (
+	foreground => undef,
+	inputbegin => undef,
+	inputline => undef,
+	inputend => undef,
+	compline=> undef,
+	compbegin => undef,
+	compend => undef,
+	background => undef,
+);
+
+#
 # Parameters for text 'graphing'.
 #
 my %textset = (
@@ -123,8 +151,8 @@ my %textset = (
 	inputline => "---",
 	inputcompline => "-|-",
 	inputend => "-o\n",
-	fromcomp => "-^-",
-	tocomp => "-v-",
+	compbegin => "-^-",
+	compend => "-v-",
 	gapbegin => "  ",
 	gapcompline => " | ",
 	gapnone => "   ",
@@ -142,8 +170,7 @@ sub semijoin($$@);
 # @network = nw_comparators($input);
 #
 # The function that starts it all.  Return a list of comparators (a
-# two-item list) that will sort an n-item list.  The default algorithm
-# used is Bose-Nelson.
+# two-item list) that will sort an n-item list.
 #
 sub nw_comparators($%)
 {
@@ -151,27 +178,18 @@ sub nw_comparators($%)
 	my %opts = @_;
 
 	return () if ($inputs < 2);
-	if (!defined $opts{algorithm} || $opts{algorithm} eq 'bosenelson')
-	{
-		return bosenelson($inputs);
-	}
-	
+	$opts{algorithm} = 'bosenelson' unless (defined $opts{algorithm} && defined $algname{$opts{algorithm}});
+
 	if ($opts{algorithm} eq 'best')
 	{
 		return @{$nw_best{$inputs}} if (exists $nw_best{$inputs});
-		carp "No 'best' network know for N = $inputs.  Using Bose-Nelson\n";
+		carp "No 'best' network know for N = $inputs.  Using $algname{bosenelson}";
 		return bosenelson($inputs);
 	}
 
-	if ($opts{algorithm} eq 'hibbard')
-	{
-		return hibbard($inputs);
-	}
-
-	if ($opts{algorithm} eq 'batcher')
-	{
-		return batcher($inputs);
-	}
+	return bosenelson($inputs) if ($opts{algorithm} eq 'bosenelson');
+	return hibbard($inputs) if ($opts{algorithm} eq 'hibbard');
+	return batcher($inputs) if ($opts{algorithm} eq 'batcher');
 
 	carp "Unknown algorithm '", $opts{algorithm}, "'\n";
 	return ();
@@ -290,6 +308,9 @@ sub hibbard($)
 #
 # @network = bosenelson($inputs);
 #
+# Return a list of two-element lists that comprise the comparators of a
+# sorting network.
+#
 # The Bose-Nelson algorithm.
 #
 sub bosenelson($)
@@ -377,6 +398,9 @@ sub bn_merge($$$$)
 #
 # @network = batcher($inputs);
 #
+# Return a list of two-element lists that comprise the comparators of a
+# sorting network.
+#
 # Batcher's sort as laid out in Knuth, Sorting and Searching, algorithm 5.2.2M.
 #
 sub batcher($)
@@ -425,6 +449,9 @@ sub batcher($)
 # Use the network of comparators (in @network) to sort the elements
 # in @array.  Returns the reference to the array, which is sorted
 # in-place.
+#
+# This function is for testing purposes only, interpreting sorting
+# pairs ad hoc in an interpreted language is going to be very slow.
 #
 sub nw_sort($$)
 {
@@ -484,14 +511,7 @@ sub nw_format($;$$$)
 			$string .= "[" . join(",", @$comparator) . "],";
 		}
 
-		if ($string eq '[')
-		{
-			$string .= ']';
-		}
-		else
-		{
-			substr($string, -1, 1) = "]";
-		}
+		substr($string, -1, 1) = "]";
 	}
 
 	return $string;
@@ -561,6 +581,23 @@ sub nw_group($$;%)
 
 	#push @node_stack, [sort {${$a}[0] <=> ${$b}[0]} splice @nodes, 0] if (@nodes);
 	return @node_stack;
+}
+
+#
+# %colors = nw_color(%coloroptions);
+#
+# Sets the colors for the graphical format of the network.
+# Returns a hash of the resulting set.
+#
+sub nw_color(%)
+{
+	my %color_opts = @_;
+
+	foreach my $key (keys %colorset)
+	{
+		$colorset{$key} = (exists $color_opts{$key})? $color_opts{$key}: undef;
+	}
+	return %colorset;
 }
 
 #
@@ -647,10 +684,10 @@ sub nw_eps_graph($$%)
 	# left and right margin definitions.
 	#
 	my $string =
-		"%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 $xbound $ybound\n%%CreationDate: " .
+		qq(%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 $xbound $ybound\n%%CreationDate: ) .
 		localtime() .
-		"\n%%Creator: perl module " . __PACKAGE__ . " version $VERSION." .
-		"\n%%Title: $title\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n" .
+		qq(\n%%Creator: perl module ) . __PACKAGE__ . qq( version $VERSION.) .
+		qq(\n%%Title: $title\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n) .
 q(
 % column inputline1 inputline2 draw-comparatorline
 /draw-comparatorline {
@@ -720,8 +757,17 @@ sub nw_svg_graph($$%)
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
+	my $ns;
+	my $string;
+
+	#
+	# The default color for drawing is the foreground color.  Use
+	# it to fill in any unspecified colors in our local colorset.
+	#
+	my $dclr = (defined $colorset{foreground})? $colorset{foreground}: 'black';
+	my %clrset = map{$_ => (defined $colorset{$_})? $colorset{$_}: $dclr} keys %colorset;
+
 	my(@vcoord, @hcoord);
-	my($ns, $string);
 
 	for (my $idx = 0; $idx < $inputs; $idx++)
 	{
@@ -741,65 +787,106 @@ sub nw_svg_graph($$%)
 
 	if (defined $grset{namespace})
 	{
-		$string = "<$grset{namespace}:svg xmlns:$grset{namespace}=\"http://www.w3.org/2000/svg\" " .
-			"width=\"$xbound\" height=\"$ybound\">\n";
+		$string .= "<$grset{namespace}:svg ";
 		$ns = $grset{namespace} . ":";
 	}
 	else
 	{
-		$string = "<svg width=\"$xbound\" height=\"$ybound\">\n";
+		$string .= "<svg";
 		$ns = "";
 	}
 
-	$string .= "    <" . $ns . "desc>\n" .
-			"        CreationDate: " . localtime() . "\n" .
-			"        Creator: perl module " . __PACKAGE__ . " version $VERSION.\n" .
-			"    </" . $ns . "desc>\n    <" . $ns . "title>$title</" . $ns . "title>\n";
+	$string .= q( xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg") .
+		q( xmlns:xlink="http://www.w3.org/1999/xlink") .
+		qq( width="$xbound" height="$ybound">\n);
+
+	$string .= qq(  <${ns}desc>\n) .
+			qq(    CreationDate: ) . localtime() .
+			qq(\n    Creator: perl module ) . __PACKAGE__ .
+			qq( version $VERSION.\n   </${ns}desc>\n   <${ns}title>$title</${ns}title>\n);
 
 	#
 	# Define the input line template.
 	#
-	$string .= "    <" . $ns . "defs>\n";
-	$string .= "        <!-- Define the input lines. -->\n";
-	$string .= "        <" . $ns . "g id=\"inputline\" style=\"fill:none; stroke:black; stroke-width:$grset{stroke_width}\" >\n";
-	$string .= "            <" . $ns . "desc>Input line.</" . $ns . "desc>\n";
-	$string .= "            <" . $ns . "circle cx=\"$grset{hz_margin}\" cy=\"0\" r=\"$grset{stroke_width}\" />\n";
-	$string .= "            <" . $ns . "line x1=\"$grset{hz_margin}\" y1=\"0\" x2=\"" .
-				($hcoord[$columns - 1] + $grset{indent}) . "\" y2=\"0\" />\n";
-	$string .= "            <" . $ns . "circle cx=\"" . ($hcoord[$columns - 1] + $grset{indent}) .
-				"\" cy=\"0\" r=\"$grset{stroke_width}\" />\n";
-	$string .= "        </" . $ns . "g>\n";
-	$string .= "        <!-- Now the comparator lines, which come in different lengths. -->\n";
+	$string .= qq(  <${ns}defs>\n    <!-- Define the input lines. -->\n);
+
+	if ($clrset{inputline} eq $clrset{inputbegin} and $clrset{inputline} eq $clrset{inputend})
+	{
+		$dclr = "stroke:$clrset{inputline}";
+
+		$string .= qq(    <${ns}g id="inputline" style="fill:none; $dclr; stroke-width:$grset{stroke_width}" >\n);
+		$string .= qq(       <${ns}desc>Input line.</${ns}desc>\n);
+		$string .= qq(       <${ns}circle cx="$grset{hz_margin}" cy="0" r="$grset{stroke_width}" />\n);
+		$string .= qq(       <${ns}line x1="$grset{hz_margin}" y1="0" x2=") .
+					($hcoord[$columns - 1] + $grset{indent}) . qq(" y2="0" />\n);
+		$string .= qq(       <${ns}circle cx=") . ($hcoord[$columns - 1] + $grset{indent}) .
+					qq(" cy="0" r="$grset{stroke_width}" />\n);
+	}
+	else
+	{
+		my $ibclr = "stroke:$clrset{inputbegin}";
+		my $ilclr = "stroke:$clrset{inputline}";
+		my $ieclr = "stroke:$clrset{inputend}";
+
+		$string .= qq(    <${ns}g id="inputline" style="fill:none; stroke-width:$grset{stroke_width}" >\n);
+		$string .= qq(      <${ns}desc>Input line.</${ns}desc>\n);
+		$string .= qq(      <${ns}circle style="$ibclr" cx="$grset{hz_margin}" cy="0" r="$grset{stroke_width}" />\n);
+		$string .= qq(      <${ns}line style="$ilclr" x1="$grset{hz_margin}" y1="0" x2=") .
+					($hcoord[$columns - 1] + $grset{indent}) . qq(" y2="0" />\n);
+		$string .= qq(      <${ns}circle style="$ieclr" cx=") . ($hcoord[$columns - 1] + $grset{indent}) .
+					qq(" cy="0" r="$grset{stroke_width}" />\n);
+	}
+
+	$string .= qq(    </${ns}g>\n    <!-- Now the comparator lines, which vary in length. -->\n);
 
 	#
 	# Define the comparator templates, which are of varying lengths.
 	#
-	my %cmptr_defd;
+	my @cmptr = (0) x $inputs;
 	for my $comparator (@$network)
 	{
 		my($from, $to) = @$comparator;
-		my $cmptr_len = $to - $from;
-		unless (defined $cmptr_defd{$cmptr_len})
+		my $clen = $to - $from;
+		if ($cmptr[$clen] == 0)
 		{
 			my $endpoint = $vcoord[$to] - $vcoord[$from];
-			$cmptr_defd{$cmptr_len} = 1;
-			$string .=
-			"        <" . $ns . "g id=\"comparator$cmptr_len\" style=\"fill:black; stroke:black; stroke-width:$grset{stroke_width}\" >\n" .
-			"            <" . $ns . "desc>Comparator size $cmptr_len.</" . $ns . "desc>\n" .
-			"            <" . $ns . "circle cx=\"0\" cy=\"0\" r=\"$grset{stroke_width}\" />\n" .
-			"            <" . $ns . "line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"$endpoint\" />\n" .
-			"            <" . $ns . "circle cx=\"0\" cy=\"$endpoint\" r=\"$grset{stroke_width}\" />\n" .
-			"        </" . $ns . "g>\n";
+			$cmptr[$clen] = 1;
+			if ($clrset{compline} eq $clrset{compbegin} and $clrset{compline} eq $clrset{compend})
+			{
+				$dclr = $clrset{compline};
+
+				$string .=
+				qq(    <${ns}g id="comparator$clen" style="fill:$dclr; stroke:$dclr; stroke-width:$grset{stroke_width}" >\n) .
+				qq(      <${ns}desc>Comparator size $clen.</${ns}desc>\n) .
+				qq(      <${ns}circle cx="0" cy="0" r="$grset{stroke_width}" />\n) .
+				qq(      <${ns}line x1="0" y1="0" x2="0" y2="$endpoint" />\n) .
+				qq(      <${ns}circle cx="0" cy="$endpoint" r="$grset{stroke_width}" />\n) .
+				qq(    </${ns}g>\n);
+			}
+			else
+			{
+				my $cbclr = "$clrset{compbegin}";
+				my $clclr = "$clrset{compline}";
+				my $ceclr = "$clrset{compend}";
+
+				$string .=
+				qq(    <${ns}g id="comparator$clen" style="stroke-width:$grset{stroke_width}" >\n) .
+				qq(      <${ns}desc>Comparator size $clen.</${ns}desc>\n) .
+				qq(      <${ns}circle style="fill:$cbclr; stroke:$cbclr" cx="0" cy="0" r="$grset{stroke_width}" />\n) .
+				qq(      <${ns}line style="fill:$clclr; stroke:$clclr" x1="0" y1="0" x2="0" y2="$endpoint" />\n) .
+				qq(      <${ns}circle style="fill:$ceclr; stroke:$ceclr" cx="0" cy="$endpoint" r="$grset{stroke_width}" />\n) .
+				qq(    </${ns}g>\n);
+			}
 		}
 	}
 
 	#
 	# End of definitions.  Draw the input lines.
 	#
-	$string .= "    </" . $ns . "defs>\n\n    <!-- Draw the input lines. -->\n";
+	$string .= qq(  </${ns}defs>\n\n   <!-- Draw the input lines. -->\n);
 	for (my $idx = 0; $idx < $inputs; $idx++)
 	{
-		$string .= "    <" . $ns . "use xlink:href=\"#inputline\" y = \"" . $vcoord[$idx] . "\" />\n";
+		$string .= qq(  <${ns}use xlink:href="#inputline" y = "$vcoord[$idx]" />\n);
 	}
 
 	#
@@ -807,22 +894,22 @@ sub nw_svg_graph($$%)
 	# Each member of a group of comparators is drawn in the same
 	# column
 	#
-	$string .= "\n    <!-- Draw the comparator lines. -->\n";
+	$string .= qq(\n  <!-- Draw the comparator lines. -->\n);
 	my $hidx = 0;
 	for my $group (@node_stack)
 	{
 		for my $comparator (@$group)
 		{
 			my($from, $to) = @$comparator;
-			my $cmptr_len = $to - $from;
+			my $clen = $to - $from;
 
-			$string .= "    <" . $ns . "use xlink:href=\"#comparator$cmptr_len\" x = \"" .
-					$hcoord[$hidx] . "\" y = \"" . $vcoord[$from] . "\" />\n";
+			$string .= qq(  <${ns}use xlink:href="#comparator$clen" x = ") .
+					$hcoord[$hidx] . qq(" y = ") . $vcoord[$from] . qq(" />\n);
 		}
 		$hidx++;
 	}
 
-	$string .= "</" . $ns . "svg>\n";
+	$string .= qq(</${ns}svg>\n);
 	return $string;
 }
 
@@ -881,11 +968,11 @@ sub nw_text_graph($$%)
 			}
 			elsif ($node_column[$row] == 1)
 			{
-				$string .= $txset{fromcomp};
+				$string .= $txset{compbegin};
 			}
 			else
 			{
-				$string .= $txset{tocomp};
+				$string .= $txset{compend};
 			}
 			$column_line[$col] += $node_column[$row];
 		}
@@ -972,11 +1059,6 @@ Algorithm::Networksort - Create inline comparisons for sorting.
   print nw_format(\@network, $inputs), "\n";
   print nw_graph(\@network, $inputs), "\n";
 
-=head1 PREREQUISITES
-
-Perl 5.6 or later. This is the version of perl under which this module
-was developed.
-
 =head1 DESCRIPTION
 
 This module will create sorting networks, a sequence of comparisons
@@ -998,13 +1080,11 @@ postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
 None by default. There is only one available export tag, ':all', which
 exports the functions to create and use sorting networks. The functions are
-nw_comparator(), nw_format(), nw_graph(), nw_group(), and nw_sort().
+nw_comparator(), nw_format(), nw_graph(), nw_color(), nw_group(), and nw_sort().
 
 =head2 Functions
 
-=over 4
-
-=item nw_comparator()
+=head3 nw_comparator()
 
     @network = nw_comparator($inputs);
 
@@ -1018,7 +1098,7 @@ will be in the arrangement of the comparators, not in their number.
 
 The choices for B<algorithm> are
 
-=over 2
+=over 3
 
 =item 'bosenelson'
 
@@ -1036,8 +1116,8 @@ they are needed for sorting," according to his article (see below).
 
 Use Batcher's Merge Exchange algorithm. Merge Exchange is a real sort, in
 that in its usual form (for example, as described in Knuth) it can handle
-a variety of inputs. But when sorting it always generates the same
-comparison pairs for a given input size, which lends itself to network sorting.
+a variety of inputs. But while sorting it always generates an identical set of
+comparison pairs per array size, which lends itself to network sorting.
 
 =item 'best'
 
@@ -1056,7 +1136,7 @@ will fall back to Bose-Nelson.
 
 =back
 
-=item nw_format()
+=head3 nw_format()
 
     $string = nw_format(\@network, $format1, $format2, \@index_base);
 
@@ -1069,38 +1149,38 @@ The first format string may also be ignored, in which case the default
 format will be used: an array of arrays as represented in perl.
 
 The network sorting pairs are zero-based. If you want the pairs written out
-for some other sequence other than 0, 1, 2, ... then you can provide that in
+for some sequence other than 0, 1, 2, ... then you can provide that in
 an array reference.
 
-Example 0: you want a string in the default format.
+B<Example 0: you want a string in the default format.>
 
     print nw_format(\@network);
 
-Example 1: you want the output to look like the default format, but one-based instead of zero-based.
+B<Example 1: you want the output to look like the default format, but one-based instead of zero-based.>
 
     print nw_format(\@network,
                 undef,
                 undef,
                 [1..$inputs]);
 
-Example 2: you want a simple list of SWAP macros.
+B<Example 2: you want a simple list of SWAP macros.>
 
     print nw_format(\@network, "SWAP(%d, %d);\n");
 
-Example 3: as with example 2, but the SWAP values need to be one-based instead of zero-based.
+B<Example 3: as with example 2, but the SWAP values need to be one-based instead of zero-based.>
 
     print nw_format(\@network,
                 "SWAP(%d, %d);\n",
                 undef,
                 [1..$inputs]);
 
-Example 4: you want a series of comparison and swap statements.
+B<Example 4: you want a series of comparison and swap statements.>
 
     print nw_format(\@network,
                 "if (v[%d] < v[%d]) then\n",
                 "    exchange(v, %d, %d)\nend if\n");
 
-Example 5: you want the default format to use letters, not numbers.
+B<Example 5: you want the default format to use letters, not numbers.>
 
     my @alphabase = ('a'..'z')[0..$inputs];
 
@@ -1113,44 +1193,84 @@ Example 5: you want the default format to use letters, not numbers.
     substr($string, -1, 1) = ']';    # Overwrite the trailing comma.
     print $string;
 
+=head3 nw_color()
 
-=item nw_graph()
+Sets the colors of the svg graph parts (eps support will come later).  The parts are named.
+
+=over 4
+
+=item inputbegin
+
+	Opening of input  line.
+
+=item inputline
+
+	The input line.
+
+=item inputend
+
+	Closing of the input line.
+
+=item compbegin
+
+	Opening of the comparator.
+
+=item compline
+
+	The comparator line.
+
+=item compend
+
+	Closing of the comparator line.
+
+=item foreground
+
+	Default color for the graph as a whole.
+
+=item background
+
+	Color of the background.  Currently unimplemented in SVG.
+
+=back
+
+All parts not named are reset to 'undef', and will be colored with the
+default 'foreground' color.  The foreground color itself has a default
+value of 'black'.  The one exception is the 'background' color, which
+has no default color at all.
+
+=head3 nw_graph()
 
 Returns a string that graphs out the comparators in a network. The format
 may be encapsulated postscript (graph=>'eps'), scalar vector graphics
 (graph=>'svg'), or the default plain text (graph=>'text' or none). The 'text'
 and 'eps' options produce output that is self-contained. The 'svg' option
 produces output between E<lt>svgE<gt> and E<lt>/svgE<gt> tags, which needs
-to be combined with XML code in order to be viewed.
+to be combined with XML markup in order to be viewed.
 
     my $inputs = 4;
     my @network = nw_comparators($inputs);
-    $netgraph = nw_graph(\@network, $inputs, graph=>'svg');
 
-    print "<?xml version=\"1.0\" standalone=\"no\"?>\n",
-	"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20001102//EN\"\n",
-        "         \"http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/" .
-	"svg-20001102.dtd\">\n",
-	$netgraph;
+    print q(<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n) .
+          nw_graph(\@network, $inputs, graph=>'svg');
 
 The 'graph' option is not the only one available. The graphing can be
 adjusted to your needs using the following options.
 
-=head2 Options for 'svg' only.
+=head4 Options for 'svg' only.
 
-=over 2
+=over 3
 
 =item namespace
 
 I<Default value: undef.>
 A tag prefix that allows programs to distinguish between different XML
-vocabularies that have the same tag. If undefined, no tag is used.
+vocabularies that have the same tag. If undefined, no tag prefix is used.
 
 =back
 
-=head2 Options for 'svg' and 'eps' graphs
+=head4 Options for 'svg' and 'eps' graphs
 
-=over 2
+=over 3
 
 =item hz_margin
 
@@ -1193,9 +1313,9 @@ The spacing separating the vertical lines (the comparators).
 
 =back
 
-=head2 Options for the 'text' graph
+=head4 Options for the 'text' graph
 
-=over 2
+=over 3
 
 =item inputbegin
 
@@ -1218,13 +1338,13 @@ over it.
 I<Default value: "-o\n".>
 The characters that make up the end of an input line.
 
-=item fromcomp
+=item compbegin
 
 I<Default value: "-^-".>
 The characters that make up an input line with the starting point of
 a comparator.
 
-=item tocomp
+=item compend
 
 I<Default value: "-v-".>
 The characters that make up an input line with the end point of
@@ -1252,7 +1372,7 @@ The characters that end the gap between the input lines.
 
 =back
 
-=item nw_group()
+=head3 nw_group()
 
 This is a function called by nw_graph(). The function takes
 the comparator list and returns a list of comparator lists, each sub-list
@@ -1260,8 +1380,8 @@ representing a group of comparators that can be printed in a single column.
 There is one option available, 'grouping', that will produce a grouping that
 represents parallel operations of comparators.
 
-The chances that you will need to use it are slim, but the following code snippet
-may represent an example:
+The chances that you will need to use this function are slim, but the
+following code snippet may represent an example:
 
     my $inputs = 8;
     my @network = nw_comparators($inputs);
@@ -1293,7 +1413,7 @@ This will produce:
 
     This will be graphed in 11 columns.
 
-=item nw_sort()
+=head3 nw_sort()
 
 Sort an array using the network. This is meant for testing purposes
 only - looping around an array of comparators in order to sort an
@@ -1307,13 +1427,11 @@ This function uses the C<< <=> >> operator for comparisons.
     nw_sort(\@network, \@digits);
     print join(", ", @digits);
 
-=back
-
 =head1 SEE ALSO
 
 =head2 Bose and Nelson's algorithm.
 
-=over 2
+=over 3
 
 =item
 
@@ -1321,17 +1439,21 @@ Bose and Nelson, "A Sorting Problem", Journal of the ACM, Vol. 9, 1962, pp. 282-
 
 =item
 
+Joseph Celko, "Bose-Nelson Sort", Doctor Dobb's Journal, September 1985.
+
+=item
+
 Frederick Hegeman, "Sorting Networks", The C/C++ User's Journal, February 1993.
 
 =item
 
-Joseph Celko, "Bose-Nelson Sort", Doctor Dobb's Journal, September 1985.
+Joseph Celko, "Scrubbing Data with Non-1NF Tables", L<http://www.dbazine.com/celko19.shtml>.
 
 =back
 
 =head2 Hibbard's algorithm.
 
-=over 2
+=over 3
 
 =item
 
@@ -1341,7 +1463,7 @@ T. N. Hibbard, "A Simple Sorting Algorithm", Journal of the ACM Vol. 10, 1963, p
 
 =head2 Batcher's Merge Exchange algorithm.
 
-=over 2
+=over 3
 
 =item
 
@@ -1351,37 +1473,32 @@ The Art of Computer Programming, Vol. 3, section 5.2.2.
 Batcher has written two other sorting algorithms that can generate network
 sorting pairs, the "Odd-Even" algorithm and the "Bitonic" algorithm. His paper
 on them can be found on his web site:
-L<http://trident.mcs.kent.edu/~batcher/>.
+L<http://www.cs.kent.edu/faculty/batcher.html>.
 
 Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
 AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114. 
-
-=item
-
-Forbes D. Lewis, "Sorting Networks"
-L<http://cs.engr.uky.edu/~lewis/essays/algorithms/sortnets/sort-net.html>
 
 =back
 
 =head2 Non-algorithmic discoveries
 
-=over 2
+=over 3
 
 =item
 
-Ian Parberry, "A computer assisted optimal depth lower bound for sorting networks with nine inputs", 
-L<http://hercule.csci.unt.edu/~ian/papers/9-input.ps>.
+Ian Parberry, "A computer assisted optimal depth lower bound for sorting
+networks with nine inputs", L<http://www.eng.unt.edu/ian/pubs/snverify.pdf>.
 
 =item
 
-The Evolving Non-Determinism (END) algorithm has found more efficient networks:
-L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
+The Evolving Non-Determinism (END) algorithm has found more efficient
+networks: L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
 
 =back
 
 =head2 Algorithm discussion
 
-=over 2
+=over 3
 
 =item
 

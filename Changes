@@ -34,3 +34,45 @@ Revision history for Perl extension Algorithm::Networksort.
 	- Fixed L<> tags in the documentation.
 	- In the eg directory, renamed svg.pl to svg00.pl, and added
 	  svg01.pl for the XHTML version.
+1.06	Sun Jan 16 2005
+	- Made some code changes to allow running this module under
+	  perl 5.005.
+	- Added to the SEE ALSO section a link to Joe Celko's
+	  article in dbazine.com.  Bose-Nelson in SQL!
+	- Updated the link to Ian Parberry's article.
+	Mon Mar 21 2005
+	- Removed a redundant check for an empty network in nw_format()
+	  in the default format section.
+	Tue May 23 2006
+	- Changed arrangement of files to default layout by Module::Build.
+	- Added the Meta.yml and Build.PL files.
+	- Changed test files to use Test::Simple.
+	Fri Jun 2 2006
+	- Added pod.t.
+	- Typo fix in pod (itme instead of item).  Fixed stale links.
+	- It looks like the Forbes D. Lewis article, "Sorting Networks"
+	  has vanished altogether.  Removed it from the See Also section.
+	Wed Jul 26 2006
+	- Split the batcher.t, best.t, bn.t, and hibbard.t files into
+	  two.  I'm trying to  cut down the time-to-finish length, which
+	  some test environments don't handle well ("Is this test done
+	  yet?  I'm bored.")
+	Wed Sep 13 2006
+	- Added color components, although no actual colors are set yet
+	  except for 'foreground'.
+	- Changed the text graph option names 'fromcomp' and 'tocomp'
+	  to 'compbegin' and 'compend' to make them consistant with the
+	  input line names 'inputbegin' and 'inputend'.  These names
+	  get adopted by the color option hash.
+	Fri Sep 15 2006
+	- SVG output now has colors.
+1.07	Tue Feb 13 2007
+	- SVG-aware browsers are better at parsing, which means that my
+	  output needs to be improved.  Internet Explorer 7 and Firefox
+	  now parse without errors.  I am not certain that the namespace
+	  option works well enough.
+	- Changed the example that used the SVG output, which was based on
+	  an older version of the Adobe SVG plugin, and which is not current.
+	- In the interests of code clarity, made use of q and qq operators
+	  instead of quotes and escaped quotes.
+	- Split the test files even further.
