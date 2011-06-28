@@ -1,39 +1,51 @@
 Revision history for Perl extension Algorithm::Networksort.
 
-0.01  Fri Jan 24 23:55:59 2003
-	- original version; created by h2xs 1.21 with options
-		-X -nAlgorithm::Networksort
-1.00  Fri Oct 17 2003
-	- Released.
-1.01  Sat Oct 25 2003
-	- Stupid error in my test scripts prevented them from
-	  reading the zero_one.pl file.  Fixed.
-1.02  Tue Dec 9 2003
-	- Little document formating errors bother me.
-	- Another stupid error.  Function nw_text_graph(), used
-	  by nw_graph(), was printing directly, not returning a
-	  string.  It's an old function, that's how it originally
-	  was designed.
-	- Added the graphing options (hz_margin, indent, etc.)
-	  to nw_graph().
-	- Merged in the nw_group_parallel() function (moved from
-	  parallel.pl in the eg subdirectory) into nw_group(),
-	  fairly painlessly as it turned out.
-1.03   Sat Dec 13 2003
-	- Added 'title' to the eps and svg graphing options.
-1.04   Sun Dec 14 2003
-	- Added 'namespace' to the svg graphing options.  Added
-	  it to the svg.pl script in the eg subdirectory.
-1.05   Thu Jan 22 2004
-	- Missing namespace in ending </g> tag for inputline definition.
-	- For some reason, I took the input value for hibbard() and
-	  batcher() to be the bit count, and restricted it to 32.  I
-	  claim tiredness and caffeine overload.  The restriction is
-	  removed, and you could have an input of 2**32 if you want,
-	  although you'd be waiting a long time for a result.
-	- Fixed L<> tags in the documentation.
-	- In the eg directory, renamed svg.pl to svg00.pl, and added
-	  svg01.pl for the XHTML version.
+1.08    Mon May 17 2010
+	- Added an option to nw_comparators() as a result of a communication by
+	  Daniel Stutzbach. Up until now, nw_comparators simply returned the
+	  comparator in the order that the algorithms created them. Daniel
+	  Stutzbach pointed out that these were often not in the best order and
+	  would cause a super-scalar pipeline to stall. He also pointed out that
+	  just reading the list of comparators grouped for graphing removes that
+	  problem (the function that arranges them for graphing, nw_group(), does
+	  in fact "parallelize" the comparators so that they'll look nice on the
+	  graph). So there's now an option to re-group the list. It's not the
+	  default because the default behavior has been there since the beginning
+	  of the module.
+	  See the documentation for nw_comparator() for more information.
+	- Undid use of mark attributes for SVG graphing. Too many inconsistencies
+	  between different SVG viewers for me to be sure that I'm doing the right
+	  thing.
+	- While undoing that change, simplified the code that generates the
+	  group/color attributes.  I decided that individually assigning the
+	  color attribute to each element was probably a less error-prone mechanism.
+	- Updated svg.pl and eps.pl in the eg directory to make use of the
+	  color options.
+	- Fixed the nw_group() example. It was using the default 'bosenelson'
+	  algorithm, but the output was from the 'batcher' algorithm. Oops.
+	- Added grouping.pl to the eg directory.
+	Wed Feb 10 2010
+	- Changed <svg> tag adding xmlns and viewBox attributes.
+	* Change input and comparator lines to use mark attributes instead
+	  of separate geometric circles.
+	- Added nw_algorithms() and nw_algorithm_name() functions, and documented
+	  them.
+	- Updated the SVG output example and demo program in the eg directory.
+1.07	Tue Feb 13 2007
+	- Bowed to convention and reversed the order of the Change entries.
+	- SVG-aware browsers are better at parsing, which means that my
+	  output needs to be improved.  Internet Explorer 7 and Firefox
+	  now parse without errors.  I am not certain that the namespace
+	  option works well enough.
+	- Changed the example that used the SVG output, which was based on
+	  an older version of the Adobe SVG plugin, and which is not current.
+	- In the interests of code clarity, made use of q and qq operators
+	  instead of quotes and escaped quotes.
+	- Split the test files even further.
+	- SVG colors!
+	- Embedded the [from, to] pairs in an xml comment before each svg
+	  command to draw comparators. Debugging aid.
+	- Put a group tag around the SVG commands for the input line.
 1.06	Sun Jan 16 2005
 	- Made some code changes to allow running this module under
 	  perl 5.005.
@@ -66,13 +78,37 @@ Revision history for Perl extension Algorithm::Networksort.
 	  get adopted by the color option hash.
 	Fri Sep 15 2006
 	- SVG output now has colors.
-1.07	Tue Feb 13 2007
-	- SVG-aware browsers are better at parsing, which means that my
-	  output needs to be improved.  Internet Explorer 7 and Firefox
-	  now parse without errors.  I am not certain that the namespace
-	  option works well enough.
-	- Changed the example that used the SVG output, which was based on
-	  an older version of the Adobe SVG plugin, and which is not current.
-	- In the interests of code clarity, made use of q and qq operators
-	  instead of quotes and escaped quotes.
-	- Split the test files even further.
+1.05   Thu Jan 22 2004
+	- Missing namespace in ending </g> tag for inputline definition.
+	- For some reason, I took the input value for hibbard() and
+	  batcher() to be the bit count, and restricted it to 32.  I
+	  claim tiredness and caffeine overload.  The restriction is
+	  removed, and you could have an input of 2**32 if you want,
+	  although you'd be waiting a long time for a result.
+	- Fixed L<> tags in the documentation.
+	- In the eg directory, renamed svg.pl to svg00.pl, and added
+	  svg01.pl for the XHTML version.
+1.04   Sun Dec 14 2003
+	- Added 'namespace' to the svg graphing options.  Added
+	  it to the svg.pl script in the eg subdirectory.
+1.03   Sat Dec 13 2003
+	- Added 'title' to the eps and svg graphing options.
+1.02  Tue Dec 9 2003
+	- Little document formating errors bother me.
+	- Another stupid error.  Function nw_text_graph(), used
+	  by nw_graph(), was printing directly, not returning a
+	  string.  It's an old function, that's how it originally
+	  was designed.
+	- Added the graphing options (hz_margin, indent, etc.)
+	  to nw_graph().
+	- Merged in the nw_group_parallel() function (moved from
+	  parallel.pl in the eg subdirectory) into nw_group(),
+	  fairly painlessly as it turned out.
+1.01  Sat Oct 25 2003
+	- Stupid error in my test scripts prevented them from
+	  reading the zero_one.pl file.  Fixed.
+1.00  Fri Oct 17 2003
+	- Released.
+0.01  Fri Jan 24 23:55:59 2003
+	- original version; created by h2xs 1.21 with options
+		-X -nAlgorithm::Networksort

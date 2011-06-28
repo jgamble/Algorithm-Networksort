@@ -4,7 +4,8 @@ use warnings;
 
 my $build = Module::Build->new(
 	module_name => 'Algorithm::Networksort',
-	dist_author => 'John M. Gamble <jgamble@ripco.com>',
+	abstract => 'Create Sorting Networks',
+	dist_author => 'John M. Gamble <jgamble@cpan.org>',
 	dist_version_from => 'lib/Algorithm/Networksort.pm',  
 
 	requires => { perl=> '5.6.0' },

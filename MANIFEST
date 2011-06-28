@@ -49,6 +49,7 @@ eg/fmt02.pl
 eg/fmt03.pl
 eg/fmt04.pl
 eg/fmt05.pl
+eg/grouping.pl
 eg/parallel.pl
 eg/svg.pl
 eg/text.pl

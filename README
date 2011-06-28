@@ -1,4 +1,4 @@
-Algorithm::Networksort version 1.05
+Algorithm::Networksort version 1.08
 ===================================
 
 This module will create sorting networks, a sequence of comparisons
@@ -24,22 +24,44 @@ in an encapsulated postscript, SVG, or text form.
 
 INSTALLATION
 
-To install this module type the following:
+Installation:
+----------------------------------------------------------------
+The usual way.  Unpack the archive:
+	gzip -d Algorithm-Networksort-1.08.tar.gz
+	tar xvf Algorithm-Networksort-1.08.tar
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+This package now makes use of Module::Build, and the Build.PL script,
+but you can still use Makefile.PL, which is provided:
+
+Go into the resulting directory, and type:
+	perl Makefile.PL
+	make
+
+Run the tests:
+	make test
+
+Install the module:
+	make install
+
+Alternatively, you can use Build.PL:
+	perl Build.PL
+	perl Build
+
+Run the tests:
+	perl Build test
+
+Install the module:
+	perl Build install
 
 DEPENDENCIES
 
 This module requires no other modules and libraries.  If you want
-to view the SVG output, good starting points would be Adobe's SVG
-plug-in for web browsers or Apache's Batik project for Java.
+to view the SVG output, good starting points would be Inkscape, Firefox
+(versino 3.6 or better), and Apache's Batik project for Java.
 Postscript viewing is easily accomplished with GNU's ghostview program.
 
 COPYRIGHT AND LICENSE
 
-Copyright (C) 2003 John M. Gamble. All rights reserved. This program is
+Copyright (C) 2010 John M. Gamble. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
