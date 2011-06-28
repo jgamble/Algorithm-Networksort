@@ -1,5 +1,9 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.09	Sat May 22 2010
+	- Error in POD snuck in. While I was fixing this, added some more
+	  documentation on group options.
+	- Added another choice for "grouping" in nw_comparators().
 1.08    Mon May 17 2010
 	- Added an option to nw_comparators() as a result of a communication by
 	  Daniel Stutzbach. Up until now, nw_comparators simply returned the

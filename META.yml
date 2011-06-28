@@ -1,6 +1,6 @@
 ---
 name: Algorithm-Networksort
-version: 1.08
+version: 1.09
 author:
   - 'John M. Gamble <jgamble@cpan.org>'
 abstract: Create Sorting Networks.
@@ -14,7 +14,7 @@ build_requires:
 provides:
   Algorithm::Networksort:
     file: lib/Algorithm/Networksort.pm
-    version: 1.08
+    version: 1.09
 generated_by: Module::Build version 0.31012
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
