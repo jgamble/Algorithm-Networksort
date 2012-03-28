@@ -1,0 +1,56 @@
+{
+   "abstract" : "Create Sorting Networks",
+   "author" : [
+      "John M. Gamble <jgamble@cpan.org>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112621",
+   "keywords" : [
+      "sort",
+      "sorting-network",
+      "batcher",
+      "hibbard",
+      "bose-nelson"
+   ],
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Algorithm-Networksort",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::Simple" : 0
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.3624"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "perl" : "v5.8.3"
+         }
+      }
+   },
+   "provides" : {
+      "Algorithm::Networksort" : {
+         "file" : "lib/Algorithm/Networksort.pm",
+         "version" : "1.10"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "url" : "git://github.com/jgamble/Algorithm-Networksort.git"
+      }
+   },
+   "version" : "1.10"
+}

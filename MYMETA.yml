@@ -1,19 +1,11 @@
 ---
-abstract: 'Create Sorting Networks'
+abstract: 'Create Sorting Networks.'
 author:
   - 'John M. Gamble <jgamble@cpan.org>'
 build_requires:
   Test::Simple: 0
-configure_requires:
-  Module::Build: 0.3624
-dynamic_config: 1
+dynamic_config: 0
 generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112621'
-keywords:
-  - sort
-  - sorting-network
-  - batcher
-  - hibbard
-  - bose-nelson
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -22,10 +14,8 @@ name: Algorithm-Networksort
 provides:
   Algorithm::Networksort:
     file: lib/Algorithm/Networksort.pm
-    version: 1.10
+    version: 1.09
 requires:
   perl: v5.8.3
-resources:
-  license: http://dev.perl.org/licenses/
-  repository: git://github.com/jgamble/Algorithm-Networksort.git
-version: 1.10
+resources: {}
+version: 1.09
