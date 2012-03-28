@@ -1,6 +1,6 @@
 package Algorithm::Networksort;
 
-use 5.006;
+use 5.008003;
 use warnings;
 use vars qw(@ISA $VERSION $flag_internal %EXPORT_TAGS @EXPORT_OK);
 
@@ -27,7 +27,7 @@ require Exporter;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '1.09';
+$VERSION = '1.10';
 $flag_internal = 0;
 
 my %nw_best = (
@@ -502,8 +502,7 @@ sub batcher($)
 #
 sub nw_sort($$)
 {
-	my $network = shift;
-	my $array = shift;
+	my($network, $array) = @_;
 
 	foreach my $comparator (@$network)
 	{
@@ -1078,7 +1077,7 @@ Algorithm::Networksort - Create Sorting Networks.
   #
   # Print the list, and print the graph of the list.
   #
-  print nw_format(\@network, $inputs), "\n";
+  print nw_format(\@network), "\n";
   print nw_graph(\@network, $inputs), "\n";
 
 =head1 DESCRIPTION
@@ -1509,7 +1508,15 @@ Frederick Hegeman, "Sorting Networks", The C/C++ User's Journal, February 1993.
 
 =item
 
-Joseph Celko, "Scrubbing Data with Non-1NF Tables", L<http://www.dbazine.com/celko19.shtml>.
+Joe Celko, I<Joe Celko's SQL For Smarties> (third edition). Implementing Bose-Nelson sorting network in SQL.
+
+This material isn't in either the second or fourth edition of the book.
+
+=item
+
+Joe Celko, I<Joe Celko's Thinking in Sets: Auxiliary, Temporal, and Virtual Tables in SQL>.
+
+The sorting network material removed from the third edition of I<SQL For Smarties> seems to have been moved to this book.
 
 =back
 
@@ -1533,12 +1540,13 @@ Code for Kenneth Batcher's Merge Exchange algorithm was derived from Knuth's
 The Art of Computer Programming, Vol. 3, section 5.2.2.
 
 Batcher has written two other sorting algorithms that can generate network
-sorting pairs, the "Odd-Even" algorithm and the "Bitonic" algorithm. His paper
-on them can be found on his web site:
-L<http://www.cs.kent.edu/faculty/batcher.html>.
+sorting pairs, the "Odd-Even" algorithm and the "Bitonic" algorithm. His
+web site (L<http://www.cs.kent.edu/~batcher/>) lists his publications, including:
 
 Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
 AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114. 
+
+A PDF of this article may be found at L<http://www.cs.kent.edu/~batcher/sort.pdf>.
 
 =back
 

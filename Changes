@@ -1,5 +1,27 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.10
+	Tue Jan 31 2012
+	- Perl version requirement changed to 5.8.3 (from 5.6.0). Support
+	  for 5.6.0 in various perl development tools is being dropped,
+	  and 5.8.3 seems to be a safe minimum, at least for the current
+	  year. Change made in Build.PL and Networksort.pm.
+	- Changed "repository" key in Build.PL from a hash to a string,
+	  as seems to be currently required under the version of
+	  Module::Build that I'm developing with (the hash form looks
+	  to be for a later version that I cannot install yet).
+	Tue Jan 11 2011
+	- Found an error in the SYNOPSIS portion of the POD. Function
+	  nw_format() had an incorrect argument.
+	Thu Sep 23 2010
+	- Experimented by adding a 'keywords' hash to Build.PL. We'll see if I
+	  did it correctly.
+	Wed Sep 15 2010
+	- Update the references. Joe Celko's article in dbazine.com is gone
+	  (dbazine.com seems to be under new ownership), but he used the
+	  same material in the third edition of his book, so I refer to
+	  that now.  Dr. Batcher's web site at Kent State has changed slightly,
+	  making a change in the links necessary.
 1.09	Sat May 22 2010
 	- Error in POD snuck in. While I was fixing this, added some more
 	  documentation on group options.

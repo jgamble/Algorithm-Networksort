@@ -1,4 +1,4 @@
-Algorithm::Networksort version 1.08
+Algorithm::Networksort version 1.10
 ===================================
 
 This module will create sorting networks, a sequence of comparisons
@@ -27,8 +27,8 @@ INSTALLATION
 Installation:
 ----------------------------------------------------------------
 The usual way.  Unpack the archive:
-	gzip -d Algorithm-Networksort-1.08.tar.gz
-	tar xvf Algorithm-Networksort-1.08.tar
+	gzip -d Algorithm-Networksort-1.10.tar.gz
+	tar xvf Algorithm-Networksort-1.10.tar
 
 This package now makes use of Module::Build, and the Build.PL script,
 but you can still use Makefile.PL, which is provided:
@@ -57,7 +57,7 @@ DEPENDENCIES
 
 This module requires no other modules and libraries.  If you want
 to view the SVG output, good starting points would be Inkscape, Firefox
-(versino 3.6 or better), and Apache's Batik project for Java.
+(version 3.6 or better), and Apache's Batik project for Java.
 Postscript viewing is easily accomplished with GNU's ghostview program.
 
 COPYRIGHT AND LICENSE
