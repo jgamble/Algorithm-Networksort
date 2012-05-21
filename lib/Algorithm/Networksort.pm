@@ -27,7 +27,7 @@ require Exporter;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '1.10';
+$VERSION = '1.20';
 $flag_internal = 0;
 
 my %nw_best = (
@@ -670,7 +670,7 @@ sub nw_graph($$;%)
 	if (!exists $print_opts{graph} or $print_opts{graph} eq "text")
 	{
 		%pset = map{$_ => (defined $print_opts{$_})? $print_opts{$_}: $textset{$_}} keys %textset;
-		return nw_text_graph($network, $inputs, %print_opts);
+		return nw_text_graph($network, $inputs, %pset);
 	}
 
 	%pset = map{$_ => (defined $print_opts{$_})? $print_opts{$_}: $graphset{$_}} keys %graphset;

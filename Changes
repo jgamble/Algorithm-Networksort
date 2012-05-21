@@ -1,5 +1,9 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.20
+	Sun May 20 2012
+	- Really bad bug introduced in version 1.08 found (text graph
+	  options were checked for in the wrong hash) has been squashed.
 1.10
 	Wed Mar 28 2012
 	- Finally organized changes (I had a hardware failure), and updated
