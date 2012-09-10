@@ -1,14 +1,19 @@
 package Algorithm::Networksort;
 
 use 5.008003;
-use warnings;
-use vars qw(@ISA $VERSION $flag_internal %EXPORT_TAGS @EXPORT_OK);
 
-use strict;
 use integer;
 use Carp;
+use Exporter;
+use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK);
+use strict;
+use warnings;
 
-require Exporter;
+#
+# Three # for "I am here" messages, four # for variable dumps.
+# Five # for nw_sort tracking.
+#
+#use Smart::Comments q(###);
 
 @ISA = qw(Exporter);
 
@@ -27,8 +32,7 @@ require Exporter;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '1.20';
-$flag_internal = 0;
+our $VERSION = '1.21';
 
 my %nw_best = (
 	(9,	# R. W. Floyd.
@@ -279,8 +283,10 @@ sub hibbard($)
 		# Save the comparator pair, and calculate the next
 		# comparator pair.
 		#
+		### hibbard() top of loop:
+		#### @comparators
+		#
 		push @comparators, [$x, $y];
-		print "Top of loop: ", nw_format(\@comparators) if ($flag_internal);
 
 		#
 		# Start with a check of X and Y's respective bits,
@@ -383,7 +389,11 @@ sub bn_split($$)
 	my($i,  $length) = @_;
 	my @comparators = ();
 
-	print "bn_split($i, $length)\n" if ($flag_internal);
+	#
+	### bn_split():
+	#### $i
+	#### $length
+	#
 
 	if ($length >= 2)
 	{
@@ -393,7 +403,11 @@ sub bn_split($$)
 		push @comparators, bn_split($i + $mid, $length - $mid);
 		push @comparators, bn_merge($i, $mid, $i + $mid, $length - $mid);
 	}
-	print "bn_split($i, $length) returns ", nw_format(\@comparators), "\n\n" if ($flag_internal);
+
+	#
+	### bn_split() returns
+	#### @comparators
+	#
 	return @comparators;
 }
 
@@ -412,8 +426,13 @@ sub bn_merge($$$$)
 	my($i, $length_i, $j, $length_j) = @_;
 	my @comparators = ();
 
-	print "bn_merge($i, $length_i, $j, $length_j)\n" if ($flag_internal);
-
+	#
+	### bn_merge():
+	#### $i
+	#### $length_i
+	#### $j
+	#### $length_j
+	#
 	if ($length_i == 1 && $length_j == 1)
 	{
 		push @comparators, [$i, $j];
@@ -438,7 +457,10 @@ sub bn_merge($$$$)
 		push @comparators, bn_merge($i + $i_mid, $length_i - $i_mid, $j, $j_mid);
 	}
 
-	print "bn_merge($i, $length_i, $j, $length_j) returns ", nw_format(\@comparators), "\n\n" if ($flag_internal);
+	#
+	### bn_merge() returns
+	#### @comparators
+	#
 	return @comparators;
 }
 
@@ -504,6 +526,11 @@ sub nw_sort($$)
 {
 	my($network, $array) = @_;
 
+	#
+	### nw_sort():
+	#### $network
+	#### $array
+	#
 	foreach my $comparator (@$network)
 	{
 		my($left, $right) = @$comparator;
@@ -513,10 +540,11 @@ sub nw_sort($$)
 			@$array[$left, $right] = @$array[$right, $left];
 		}
 
-		if ($flag_internal) {foreach my $elem (@$array){print $elem;} print "  ";}
+		#
+		##### @$array
+		#
 	}
 
-	print "\n" if ($flag_internal);
 	return $array;
 }
 

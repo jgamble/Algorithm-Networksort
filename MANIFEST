@@ -1,11 +1,10 @@
 Build.PL
 Changes
 Makefile.PL
+LICENSE
 MANIFEST
 META.json
-MYMETA.json
 META.yml
-MYMETA.yml
 README
 lib/Algorithm/Networksort.pm
 t/batcher04.t

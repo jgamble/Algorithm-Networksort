@@ -7,7 +7,7 @@ my $build = Module::Build->new(
 
 	dist_abstract => 'Create Sorting Networks',
 	dist_author => ['John M. Gamble <jgamble@cpan.org>'],
-	dist_version => '1.20',  
+	dist_version => '1.21',  
 
 	requires => {
 		perl=> '5.8.3'
@@ -22,8 +22,11 @@ my $build = Module::Build->new(
 	},
 
 	license => 'perl',
+	create_license => 1,
 	create_readme => 0,
 	create_makefile_pl => 'traditional',
+	dynamic_config => 0,
+
 	meta_merge => {
 		keywords => [qw(sort sorting-network
 			batcher hibbard bose-nelson)],

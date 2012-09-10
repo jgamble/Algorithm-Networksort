@@ -1,5 +1,15 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.21
+	Mon Sep 10 2012
+	- Modernized parts of the code -- $VERSION is now an 'our'
+	  variable instead of a 'use VARS' variable, for example.
+	- Added 'create_license => 1' to the Build.PL list of attributes.
+	- Added 'dynamic_config => 0' to the Build.PL list of attributes.
+	- Added LICENSE to the MANIFEST file.
+	- Yanked an "$flag_internal" variable (and its debugging code)
+	  in favor of Smart::Comments.
+	- Bumped the $VERSION value up a point.
 1.20
 	Sun May 20 2012
 	- Really bad bug introduced in version 1.08 found (text graph
