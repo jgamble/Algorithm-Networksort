@@ -117,6 +117,7 @@ my %algname = (
 	bosenelson => "Bose-Nelson",
 	batcher => "Batcher's Mergesort",
 	hibbard => "Hibbard",
+	bubble => "Bubble",
 	best => "Best Known",
 );
 
@@ -219,6 +220,7 @@ sub nw_comparators
 	@comparators = bosenelson($inputs) if ($opts{algorithm} eq 'bosenelson');
 	@comparators = hibbard($inputs) if ($opts{algorithm} eq 'hibbard');
 	@comparators = batcher($inputs) if ($opts{algorithm} eq 'batcher');
+	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -504,6 +506,32 @@ sub batcher
 
 	return @network;
 }
+
+
+
+#
+# @network = batcher($inputs);
+#
+# Simple bubble-sort network, only for comparison purposes.
+#
+
+sub bubble($)
+{
+	my $inputs = shift;
+	my @network;
+
+	return () if ($inputs < 2);
+
+	for (my $j=$inputs-1; $j > 0; $j--) {
+		for (my $i=0; $i < $j; $i++) {
+			push @network, [ $i, $i + 1, ];
+		}
+	}
+
+	return @network;
+}
+
+
 
 #
 # $array_ref = nw_sort(\@network, \@array);
