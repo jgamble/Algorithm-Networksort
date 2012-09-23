@@ -165,19 +165,12 @@ my %textset = (
 );
 
 #
-# Some forward declarations.
-#
-sub bn_split($$);
-sub bn_merge($$$$);
-sub semijoin($$@);
-
-#
 # @algkeys = nw_algorithms();
 #
 # Return a list algorithm choices. Each one is a valid key
 # for the nw_comparator() algorithm key.
 #
-sub nw_algorithms()
+sub nw_algorithms
 {
 	return keys %algname;
 }
@@ -187,7 +180,7 @@ sub nw_algorithms()
 #
 # Return the text-worthy name of the algorithm, given its key name.
 #
-sub nw_algorithm_name($)
+sub nw_algorithm_name
 {
 	my $alg = shift;
 	return $algname{$alg} if (defined $alg);
@@ -200,7 +193,7 @@ sub nw_algorithm_name($)
 # The function that starts it all.  Return a list of comparators (a
 # two-item list) that will sort an n-item list.
 #
-sub nw_comparators($%)
+sub nw_comparators
 {
 	my $inputs = shift;
 	my %opts = @_;
@@ -257,7 +250,7 @@ sub nw_comparators($%)
 #
 # The ALGOL code was overly dependent on gotos.  This has been changed.
 #
-sub hibbard($)
+sub hibbard
 { 
 	my $inputs = shift;
 	my @comparators;
@@ -366,7 +359,7 @@ sub hibbard($)
 #
 # The Bose-Nelson algorithm.
 #
-sub bosenelson($)
+sub bosenelson
 {
 	my $inputs = shift;
 
@@ -384,7 +377,7 @@ sub bosenelson($)
 # 'length' variables.  The $i variable merely acts as a starting
 # base, and could easily have been 1 to begin with.
 #
-sub bn_split($$)
+sub bn_split
 {
 	my($i,  $length) = @_;
 	my @comparators = ();
@@ -421,7 +414,7 @@ sub bn_split($$)
 # lengths of the ranges.  The $i and $j variables merely act as
 # starting bases.
 #
-sub bn_merge($$$$)
+sub bn_merge
 {
 	my($i, $length_i, $j, $length_j) = @_;
 	my @comparators = ();
@@ -472,7 +465,7 @@ sub bn_merge($$$$)
 #
 # Batcher's sort as laid out in Knuth, Sorting and Searching, algorithm 5.2.2M.
 #
-sub batcher($)
+sub batcher
 {
 	my $inputs = shift;
 	my @network;
@@ -522,7 +515,7 @@ sub batcher($)
 # This function is for testing purposes only, interpreting sorting
 # pairs ad hoc in an interpreted language is going to be very slow.
 #
-sub nw_sort($$)
+sub nw_sort
 {
 	my($network, $array) = @_;
 
@@ -554,7 +547,7 @@ sub nw_sort($$)
 # Return a string that represents the comparators.  Default format is
 # an array of arrays, in standard perl form
 #
-sub nw_format($;$$$)
+sub nw_format
 {
 	my($network, $cmp_format, $swap_format, $index_base) = @_;
 	my $string = '';
@@ -599,7 +592,7 @@ sub nw_format($;$$$)
 # in a single column.  This makes it easier for the nw_graph routines to
 # render a visual representation of the sorting network.
 #
-sub nw_group($$;%)
+sub nw_group
 {
 	my $network = shift;
 	my $inputs = shift;
@@ -663,7 +656,7 @@ sub nw_group($$;%)
 # Sets the colors for the graphical format of the sorting network.
 # Returns a hash of the resulting set.
 #
-sub nw_color(%)
+sub nw_color
 {
 	my %color_opts = @_;
 
@@ -679,7 +672,7 @@ sub nw_color(%)
 #
 # Returns a string that contains the sorting network in a graphical format.
 #
-sub nw_graph($$;%)
+sub nw_graph
 {
 	my $network = shift;
 	my $inputs = shift;
@@ -715,7 +708,7 @@ sub nw_graph($$;%)
 #
 # Returns a string that contains the sorting network in an EPS format.
 #
-sub nw_eps_graph($$%)
+sub nw_eps_graph
 {
 	my $network = shift;
 	my $inputs = shift;
@@ -814,7 +807,7 @@ q(
 # Return a graph of the sorting network in Scalable Vector Graphics.
 # Measurements are in pixels. 0,0 is the upper left corner.
 #
-sub nw_svg_graph($$%)
+sub nw_svg_graph
 {
 	my $network = shift;
 	my $inputs = shift;
@@ -967,7 +960,7 @@ sub nw_svg_graph($$%)
 #
 # Return a graph of the sorting network in text.
 #
-sub nw_text_graph($$%)
+sub nw_text_graph
 {
 	my $network = shift;
 	my $inputs = shift;
@@ -1061,7 +1054,7 @@ sub nw_text_graph($$%)
 # negative, in which case the first item of the new list is made from the
 # leftover elements from the front of the list.
 #
-sub semijoin($$@)
+sub semijoin
 {
 	my($jstr, $itemcount, @oldlist) = @_;
 	my($idx);
