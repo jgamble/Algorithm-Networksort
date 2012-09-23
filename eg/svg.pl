@@ -32,7 +32,15 @@ my @network = nw_comparators($inputs, algorithm => $alg);
 
 print qq(<?xml version="1.0" standalone="no"?>\n),
 qq(<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ),
-qq("http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n),
-	nw_graph(\@network, $inputs, graph => 'svg');
+qq("http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n);
+
+print "<!--\n";
+foreach my $k (keys %colorset)
+{
+	my $v = (defined $colorset{$k})? $colorset{$k}: "undef";
+	print "$k => $v\n";
+}
+print " -->\n";
+print nw_graph(\@network, $inputs, graph => 'svg');
 
 exit(0);
