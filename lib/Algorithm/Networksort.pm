@@ -668,6 +668,20 @@ sub nw_color
 }
 
 #
+# %svg_colorset = svg_color();
+#
+# Return the full list of colors used to make the SVG output.
+#
+# The default color for drawing is the foreground color.  Use
+# it to fill in any unspecified colors in our local colorset.
+#
+sub svg_color
+{
+	my $dclr = (defined $colorset{foreground})? $colorset{foreground}: 'black';
+	return map{$_ => (defined $colorset{$_})? $colorset{$_}: $dclr} keys %colorset;
+}
+
+#
 # $string = nw_graph(\@network, $inputs, %options);
 #
 # Returns a string that contains the sorting network in a graphical format.
@@ -817,12 +831,7 @@ sub nw_svg_graph
 	my $columns = scalar @node_stack;
 
 
-	#
-	# The default color for drawing is the foreground color.  Use
-	# it to fill in any unspecified colors in our local colorset.
-	#
-	my $dclr = (defined $colorset{foreground})? $colorset{foreground}: 'black';
-	my %clrset = map{$_ => (defined $colorset{$_})? $colorset{$_}: $dclr} keys %colorset;
+	my %clrset = svg_color();
 	my $ns =  (defined $grset{namespace})? $grset{namespace} . ":" : "";
 
 	#
@@ -854,15 +863,10 @@ sub nw_svg_graph
 		qq(  <${ns}title>$title</${ns}title>\n);
 
 	#
-	# Set up the marker and the input line template.
+	# Set up the input line template.
 	#
 	$string .= qq(  <${ns}defs>\n);
 
-	#
-	# Define input line markers and comparator line marks.
-	#
-	my $refdim = $grset{stroke_width};
-	my $boxdim = 2 * $refdim;
 	my $b_clr = "stroke:$clrset{inputbegin}";
 	my $l_clr = "stroke:$clrset{inputline}";
 	my $e_clr = "stroke:$clrset{inputend}";
@@ -890,7 +894,6 @@ sub nw_svg_graph
 		qq(style="fill:none; stroke:$clrset{inputline}; stroke-width:$grset{stroke_width}" >\n) .
 		qq(       <${ns}desc>Input line.</${ns}desc>\n) .
 		qq(       <${ns}line x1="$left_margin" y1="0" x2="$right_margin" y2="0" ) . 
-		qq(style="marker-start: url(#inputbeginmark); marker-end: url(#inputendmark)" />\n);
 
 	$string .= qq(    </${ns}g>\n    <!-- Define the comparator lines, which vary in length. -->\n);
 
