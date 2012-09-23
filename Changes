@@ -1,5 +1,10 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.22
+	Fri Sep 22 2012
+	- Removed prototypes.
+	- Found and removed some left over marker code in the SVG output.
+	- Moved SVG graph color code to its own function, svg_color().
 1.21
 	Mon Sep 10 2012
 	- Modernized parts of the code -- $VERSION is now an 'our'
