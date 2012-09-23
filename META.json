@@ -3,8 +3,8 @@
    "author" : [
       "John M. Gamble <jgamble@cpan.org>"
    ],
-   "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4, CPAN::Meta::Converter version 2.112150",
+   "dynamic_config" : 0,
+   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
    "keywords" : [
       "sort",
       "sorting-network",
@@ -23,12 +23,12 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Test::Simple" : 0
+            "Test::Simple" : "0"
          }
       },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.3624"
+            "Module::Build" : "0.4"
          }
       },
       "runtime" : {
@@ -40,7 +40,7 @@
    "provides" : {
       "Algorithm::Networksort" : {
          "file" : "lib/Algorithm/Networksort.pm",
-         "version" : "1.20"
+         "version" : "1.21"
       }
    },
    "release_status" : "stable",
@@ -52,5 +52,5 @@
          "url" : "git://github.com/jgamble/Algorithm-Networksort.git"
       }
    },
-   "version" : "1.20"
+   "version" : "1.21"
 }
