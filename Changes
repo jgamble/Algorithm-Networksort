@@ -1,11 +1,16 @@
 Revision history for Perl extension Algorithm::Networksort.
 
-1.22
+1.21
+	Sun Sep 24 2012
+	- Added color debugging code in eg/svg.pl (it lists the
+	  color settings in XML comments).
+	- Updated eg/text.pl to take command line options.
+	- Moved graph and text option handling to their own functions,
+	  graph_segment() and text_segment(), for future non-messy coding.
 	Fri Sep 22 2012
 	- Removed prototypes.
-	- Found and removed some left over marker code in the SVG output.
+	- Found and removed some left-over marker code in the SVG output.
 	- Moved SVG graph color code to its own function, svg_color().
-1.21
 	Mon Sep 10 2012
 	- Modernized parts of the code -- $VERSION is now an 'our'
 	  variable instead of a 'use VARS' variable, for example.
