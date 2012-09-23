@@ -678,7 +678,27 @@ sub nw_color
 sub svg_color
 {
 	my $dclr = (defined $colorset{foreground})? $colorset{foreground}: 'black';
-	return map{$_ => (defined $colorset{$_})? $colorset{$_}: $dclr} keys %colorset;
+	return map{$_ => (defined $colorset{$_})?
+	    $colorset{$_}:
+	    $dclr} keys %colorset;
+}
+
+sub text_segments
+{
+	my %print_opts = @_;
+
+	return map{$_ => (defined $print_opts{$_})?
+	    $print_opts{$_}:
+	    $textset{$_}} keys %textset;
+}
+
+sub graph_segments
+{
+	my %print_opts = @_;
+
+	return map{$_ => (defined $print_opts{$_})?
+	    $print_opts{$_}:
+	    $graphset{$_}} keys %graphset;
 }
 
 #
@@ -691,7 +711,6 @@ sub nw_graph
 	my $network = shift;
 	my $inputs = shift;
 	my %print_opts = @_;
-	my %pset;
 
 	if (scalar @$network == 0)
 	{
@@ -702,16 +721,15 @@ sub nw_graph
 	#
 	# Text graph by default.
 	#
-	if (!exists $print_opts{graph} or $print_opts{graph} eq "text")
-	{
-		%pset = map{$_ => (defined $print_opts{$_})? $print_opts{$_}: $textset{$_}} keys %textset;
-		return nw_text_graph($network, $inputs, %pset);
-	}
+	return nw_text_graph($network, $inputs,
+	    text_segments(%print_opts)) if (!exists $print_opts{graph} or $print_opts{graph} eq "text");
 
-	%pset = map{$_ => (defined $print_opts{$_})? $print_opts{$_}: $graphset{$_}} keys %graphset;
 
-	return nw_svg_graph($network, $inputs, %pset) if ($print_opts{graph} eq "svg");
-	return nw_eps_graph($network, $inputs, %pset) if ($print_opts{graph} eq "eps");
+	return nw_svg_graph($network, $inputs,
+	    graph_segments(%print_opts)) if ($print_opts{graph} eq "svg");
+
+	return nw_eps_graph($network, $inputs,
+	    graph_segments(%print_opts)) if ($print_opts{graph} eq "eps");
 
 	carp "Unknown 'graph' type '" . $print_opts{graph} . "'.\n";
 	return "";
