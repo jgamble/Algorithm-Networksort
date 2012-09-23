@@ -14,7 +14,7 @@ my $build = Module::Build->new(
 	},
 
 	configure_requires => {
-		'Module::Build' => '0.3624',
+		'Module::Build' => '0.4',
 	},
 
 	build_requires => {
