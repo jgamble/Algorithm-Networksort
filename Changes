@@ -1,5 +1,12 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.22
+	Fri Sep 28 2012
+	- Took horizontal and vertical coord code out of nw_eps_graph()
+	  and nw_svg_graph(), and made them into their own functions.
+	- I really had an odd style for initializing variables from @_
+	  back in 2003. Made it less odd.
+	- Small inefficiency with the column count in nw_text_graph() fixed.
 1.21
 	Sun Sep 24 2012
 	- Added color debugging code in eg/svg.pl (it lists the
@@ -22,7 +29,7 @@ Revision history for Perl extension Algorithm::Networksort.
 	- Bumped the $VERSION value up a point.
 1.20
 	Sun May 20 2012
-	- Really bad bug introduced in version 1.08 found (text graph
+	- Really bad bug introduced in version 1.08 (text graph
 	  options were checked for in the wrong hash) has been squashed.
 1.10
 	Wed Mar 28 2012
