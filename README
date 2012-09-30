@@ -1,4 +1,4 @@
-Algorithm::Networksort version 1.21
+Algorithm::Networksort version 1.22
 ===================================
 
 This module will create sorting networks, a sequence of comparisons
@@ -22,13 +22,17 @@ print out your network in many ways (see documentation).  There
 is also a graphical output function that will return the network
 in an encapsulated postscript, SVG, or text form.
 
+NOTE: Post version 1.08, there was a severe error in the SVG graphing
+code that would prevent the SVG graph from being displayed. The error
+has been corrected in this version.
+
 INSTALLATION
 
 Installation:
 ----------------------------------------------------------------
 The usual way.  Unpack the archive:
-	gzip -d Algorithm-Networksort-1.21.tar.gz
-	tar xvf Algorithm-Networksort-1.21.tar
+	gzip -d Algorithm-Networksort-1.22.tar.gz
+	tar xvf Algorithm-Networksort-1.22.tar
 
 This package now makes use of Module::Build, and the Build.PL script,
 but you can still use Makefile.PL, which is provided:

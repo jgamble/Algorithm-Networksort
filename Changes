@@ -1,6 +1,13 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.22
+	Sun Sep 30 2012
+	- Something odd happened to the SVG code post version 1.08,
+	  leading to unparsable output (could be the result of the
+	  hardware failure, could be merge error on my part).
+	  Took the SVG graph code from version 1.08, and re-applied
+	  the changes to the graph code between then and version 1.21.
+	  The graphs come out correctly now.
 	Fri Sep 28 2012
 	- Took horizontal and vertical coord code out of nw_eps_graph()
 	  and nw_svg_graph(), and made them into their own functions.
