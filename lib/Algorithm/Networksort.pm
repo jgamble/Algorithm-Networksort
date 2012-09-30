@@ -32,7 +32,7 @@ use warnings;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.21';
+our $VERSION = '1.22';
 
 my %nw_best = (
 	(9,	# R. W. Floyd.
@@ -251,7 +251,7 @@ sub nw_comparators
 # The ALGOL code was overly dependent on gotos.  This has been changed.
 #
 sub hibbard
-{ 
+{
 	my $inputs = shift;
 	my @comparators;
 	my($bit, $xbit, $ybit);
@@ -268,7 +268,7 @@ sub hibbard
 	# $x and $y are the comparator endpoints.
 	# We begin with values of zero and one.
 	#
-	my($x, $y) = (0, 1); 
+	my($x, $y) = (0, 1);
 
 	while (1 == 1)
 	{
@@ -287,7 +287,7 @@ sub hibbard
 		#
 		$bit = 1;
 		$xbit = $x & $bit;
-	 	$ybit = $y & $bit; 
+	 	$ybit = $y & $bit;
 
 		#
 		# But if the X bit is 1 and the Y bit is
@@ -299,7 +299,7 @@ sub hibbard
 
 			$bit <<= 1;
 			$xbit = $x & $bit;
-	 		$ybit = $y & $bit; 
+	 		$ybit = $y & $bit;
 		}
 
  		if ($xbit != 0)		#  and $ybit != 0
@@ -307,7 +307,7 @@ sub hibbard
 			$y &= ~$bit;
 			next;
 		}
- 
+
 		#
 		# The X bit is zero if we've gotten this far.
 		#
@@ -345,7 +345,7 @@ sub hibbard
 		#
 		# No return, so loop onwards.
 		#
-		$bit = 1 if ($y < $inputs - 1); 
+		$bit = 1 if ($y < $inputs - 1);
 		$x &= ~$bit;
 		$y |= $bit;
 	}
@@ -702,15 +702,47 @@ sub graph_segments
 }
 
 #
+# Set up the horizontal coordinates.
+#
+sub hz_coords
+{
+	my($columns, %grset) = @_;
+
+	my @hcoord = ($grset{hz_margin} + $grset{indent}) x $columns;
+
+	for my $idx (0..$columns-1)
+	{
+		$hcoord[$idx] += $idx * ($grset{hz_sep} + $grset{stroke_width});
+	}
+
+	return @hcoord;
+}
+
+#
+# Set up the vertical coordinates.
+#
+sub vt_coords
+{
+	my($inputs, %grset) = @_;
+
+	my @vcoord = ($grset{vt_margin}) x $inputs;
+
+	for my $idx (0..$inputs-1)
+	{
+		$vcoord[$idx] += $idx * ($grset{vt_sep} + $grset{stroke_width});
+	}
+
+	return @vcoord;
+}
+
+#
 # $string = nw_graph(\@network, $inputs, %options);
 #
 # Returns a string that contains the sorting network in a graphical format.
 #
 sub nw_graph
 {
-	my $network = shift;
-	my $inputs = shift;
-	my %print_opts = @_;
+	my($network, $inputs, %print_opts) = @_;
 
 	if (scalar @$network == 0)
 	{
@@ -721,15 +753,15 @@ sub nw_graph
 	#
 	# Text graph by default.
 	#
-	return nw_text_graph($network, $inputs,
-	    text_segments(%print_opts)) if (!exists $print_opts{graph} or $print_opts{graph} eq "text");
+	return nw_text_graph($network, $inputs, text_segments(%print_opts))
+	    if (!exists $print_opts{graph} or $print_opts{graph} eq "text");
 
 
-	return nw_svg_graph($network, $inputs,
-	    graph_segments(%print_opts)) if ($print_opts{graph} eq "svg");
+	return nw_svg_graph($network, $inputs, graph_segments(%print_opts))
+	    if ($print_opts{graph} eq "svg");
 
-	return nw_eps_graph($network, $inputs,
-	    graph_segments(%print_opts)) if ($print_opts{graph} eq "eps");
+	return nw_eps_graph($network, $inputs, graph_segments(%print_opts))
+	    if ($print_opts{graph} eq "eps");
 
 	carp "Unknown 'graph' type '" . $print_opts{graph} . "'.\n";
 	return "";
@@ -742,9 +774,7 @@ sub nw_graph
 #
 sub nw_eps_graph
 {
-	my $network = shift;
-	my $inputs = shift;
-	my %grset = @_;
+	my($network, $inputs, %grset) = @_;
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
@@ -752,18 +782,8 @@ sub nw_eps_graph
 	#
 	# Set up the vertical and horizontal coordinates.
 	#
-	my @vcoord = ($grset{vt_margin}) x $inputs;
-	my @hcoord = ($grset{hz_margin} + $grset{indent}) x $columns;
-
-	for my $idx (0..$inputs-1)
-	{
-		$vcoord[$idx] += $idx * ($grset{vt_sep} + $grset{stroke_width});
-	}
-
-	for my $idx (0..$columns-1)
-	{
-		$hcoord[$idx] += $idx * ($grset{hz_sep} + $grset{stroke_width});
-	}
+	my @vcoord = vt_coords($inputs, %grset);
+	my @hcoord = hz_coords($columns, %grset);
 
 	my $xbound = $hcoord[$columns - 1] + $grset{hz_margin} + $grset{indent};
 	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
@@ -790,7 +810,7 @@ q(
 
 % inputline draw-inputline
 /draw-inputline {
-    vcoord exch get leftmargin exch dup rightmargin exch % x1 y1 x2 y1 
+    vcoord exch get leftmargin exch dup rightmargin exch % x1 y1 x2 y1
     newpath 2 copy currentlinewidth 0 360 arc moveto
     2 copy lineto currentlinewidth 0 360 arc stroke
 } bind def
@@ -841,40 +861,33 @@ q(
 #
 sub nw_svg_graph
 {
-	my $network = shift;
-	my $inputs = shift;
-	my %grset = @_;
+	my($network, $inputs, %grset) = @_;
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
 
-
+	#
+	# Get the colorset, using the foreground color as the default color
+	# for drawing.
+	#
 	my %clrset = svg_color();
 	my $ns =  (defined $grset{namespace})? $grset{namespace} . ":" : "";
 
 	#
 	# Set up the vertical and horizontal coordinates.
 	#
-	my $left_margin = $grset{hz_margin};
-	my @vcoord = ($grset{vt_margin}) x $inputs;
-	my @hcoord = ($left_margin + $grset{indent}) x $columns;
+	my @vcoord = vt_coords($inputs, %grset);
+	my @hcoord = hz_coords($columns, %grset);
 
-	for my $idx (0..$inputs-1)
-	{
-		$vcoord[$idx] += $idx * ($grset{vt_sep} + $grset{stroke_width});
-	}
-
-	for my $idx (0..$columns-1)
-	{
-		$hcoord[$idx] += $idx * ($grset{hz_sep} + $grset{stroke_width});
-	}
-
-	my $xbound = $hcoord[$columns - 1] + $left_margin + $grset{indent};
+	my $xbound = $hcoord[$columns - 1] + $grset{hz_margin} + $grset{indent};
 	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
-	my $right_margin = $xbound - $left_margin;
+
+	my $right_margin = $hcoord[$columns - 1] + $grset{indent};
 	my $title = $grset{title} || "N = $inputs Sorting Network.";
 
-	my $string = qq(<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="$xbound" height="$ybound" viewbox="0 0 $xbound $ybound">\n) .
+	my $string = qq(<svg xmlns="http://www.w3.org/2000/svg" ) .
+		qq(xmlns:xlink="http://www.w3.org/1999/xlink" ) .
+		qq(width="$xbound" height="$ybound" viewbox="0 0 $xbound $ybound">\n) .
 		qq(  <${ns}desc>\n    CreationDate: ) . localtime() .
 		qq(\n    Creator: perl module ) . __PACKAGE__ .
 		qq( version $VERSION.\n  </${ns}desc>\n) .
@@ -883,41 +896,25 @@ sub nw_svg_graph
 	#
 	# Set up the input line template.
 	#
-	$string .= qq(  <${ns}defs>\n);
-
 	my $b_clr = "stroke:$clrset{inputbegin}";
 	my $l_clr = "stroke:$clrset{inputline}";
 	my $e_clr = "stroke:$clrset{inputend}";
 
-	$string .= qq(    <${ns}g id="inputline" style="fill:none; stroke-width:$grset{stroke_width}" >\n);
-	$string .= qq(      <${ns}desc>Input line.</${ns}desc>\n);
-	$string .= qq(      <${ns}circle style="$b_clr" cx="$grset{hz_margin}" cy="0" r="$grset{stroke_width}" />\n);
-	$string .= qq(      <${ns}line style="$l_clr" x1="$grset{hz_margin}" y1="0" x2=") .
-				($hcoord[$columns - 1] + $grset{indent}) . qq(" y2="0" />\n);
-	$string .= qq(      <${ns}circle style="$e_clr" cx=") . ($hcoord[$columns - 1] + $grset{indent}) .
-				qq(" cy="0" r="$grset{stroke_width}" />\n);
-
-	$string .= qq(    </${ns}g>\n    <!-- Now the comparator lines, which vary in length. -->\n);
-
-
-	$string .= qq(    <!-- Define the input line template. -->\n);
-
-	#
-	# Set the color in the group tag if all the components of the
-	# inputline have the same color.  Otherwise, color the components
-	# in the group individually.
-	#
 	$string .=
-		qq(    <${ns}g id="inputline" ) .
-		qq(style="fill:none; stroke:$clrset{inputline}; stroke-width:$grset{stroke_width}" >\n) .
-		qq(       <${ns}desc>Input line.</${ns}desc>\n) .
-		qq(       <${ns}line x1="$left_margin" y1="0" x2="$right_margin" y2="0" ) . 
-
-	$string .= qq(    </${ns}g>\n    <!-- Define the comparator lines, which vary in length. -->\n);
+		qq(  <${ns}defs>\n) .
+		qq(    <!-- Define the input line template. -->\n) .
+		qq(    <${ns}g id="inputline" style="fill:none; stroke-width:$grset{stroke_width}" >\n) .
+		qq(      <${ns}desc>Input line.</${ns}desc>\n) .
+		qq(      <${ns}circle style="$b_clr" cx="$grset{hz_margin}" cy="0" r="$grset{stroke_width}" />\n) .
+		qq(      <${ns}line style="$l_clr" x1="$grset{hz_margin}" y1="0" x2="$right_margin" y2="0" />\n) .
+		qq(      <${ns}circle style="$e_clr" cx="$right_margin" cy="0" r="$grset{stroke_width}" />\n) .
+		qq(    </${ns}g>\n\n);
 
 	#
-	# Define the comparator templates, which are of varying lengths.
+	# Set up the comparator templates.
 	#
+	$string .= qq(    <!-- Define the comparator lines, which vary in length. -->\n);
+
 	my @cmptr = (0) x $inputs;
 	for my $comparator (@$network)
 	{
@@ -983,13 +980,9 @@ sub nw_svg_graph
 #
 sub nw_text_graph
 {
-	my $network = shift;
-	my $inputs = shift;
-	my %txset = @_;
+	my($network, $inputs, %txset) = @_;
 
 	my @node_stack = nw_group($network, $inputs);
-	my $column = 0;
-	my $string = "";
 	my @inuse_nodes;
 
 	#
@@ -1006,13 +999,14 @@ sub nw_text_graph
 			@node_column[$from, $to] = (1, -1);
 		}
 		push @inuse_nodes, [splice @node_column, 0];
-		$column++;
 	}
 
 	#
 	# Print that network.
 	#
+	my $column = scalar @node_stack;
 	my @column_line = (0) x $column;
+	my $string = "";
 
 	for my $row (0..$inputs-1)
 	{
@@ -1078,21 +1072,22 @@ sub nw_text_graph
 sub semijoin
 {
 	my($jstr, $itemcount, @oldlist) = @_;
-	my($idx);
-	my(@newlist) = ();
+	my(@newlist);
 
 	return @oldlist if ($itemcount <= 1 and $itemcount >= -1);
 
 	if ($itemcount > 0)
 	{
-		push @newlist, join $jstr, splice(@oldlist, 0, $itemcount) while @oldlist;
+		push @newlist, join $jstr, splice(@oldlist, 0, $itemcount)
+			while @oldlist;
 	}
 	else
 	{
 		$itemcount = -$itemcount;
 		unshift @newlist, join $jstr, splice(@oldlist, -$itemcount, $itemcount)
-			while $itemcount <= @oldlist;
-		unshift @newlist, join $jstr, splice( @oldlist, 0, $itemcount) if @oldlist;
+		    while $itemcount <= @oldlist;
+		unshift @newlist, join $jstr, splice( @oldlist, 0, $itemcount)
+		    if @oldlist;
 	}
 
 	return @newlist;
@@ -1586,7 +1581,7 @@ sorting pairs, the "Odd-Even" algorithm and the "Bitonic" algorithm. His
 web site (L<http://www.cs.kent.edu/~batcher/>) lists his publications, including:
 
 Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
-AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114. 
+AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114.
 
 A PDF of this article may be found at L<http://www.cs.kent.edu/~batcher/sort.pdf>.
 
