@@ -15,7 +15,7 @@ plan skip_all => "Text::XML::Easy required for verifying SVG" if $@;
 my @network = nw_comparators(4, algorithm=>'hibbard');
 my $svg = nw_graph(\@network, 4, graph => 'svg');
 
-is_well_formed_xml($svg);
+is_well_formed_xml($svg, "Test with default settings");
 
 #
 # Now create one that has the defaults changed.
@@ -34,5 +34,5 @@ $svg = nw_graph(\@network, 7, graph => 'svg',
 		hz_sep => 16,
 		stroke_width => 4);
 
-is_well_formed_xml($svg);
+is_well_formed_xml($svg, "Test with defaults changed");
 exit(0);
