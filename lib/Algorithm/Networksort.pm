@@ -1297,35 +1297,35 @@ Sets the colors of the svg graph parts (eps support will come later).  The parts
 
 =item inputbegin
 
-	Opening of input line.
+Opening of input line.
 
 =item inputline
 
-	The input line.
+The input line.
 
 =item inputend
 
-	Closing of the input line.
+Closing of the input line.
 
 =item compbegin
 
-	Opening of the comparator.
+Opening of the comparator.
 
 =item compline
 
-	The comparator line.
+The comparator line.
 
 =item compend
 
-	Closing of the comparator line.
+Closing of the comparator line.
 
 =item foreground
 
-	Default color for the graph as a whole.
+Default color for the graph as a whole.
 
 =item background
 
-	Color of the background.  Currently unimplemented in SVG.
+Color of the background.  Currently unimplemented in SVG.
 
 =back
 
