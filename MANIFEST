@@ -41,6 +41,7 @@ t/hibbard15.t
 t/hibbard16.t
 t/hibbard17.t
 t/pod.t
+t/svg.t
 t/zero_one.pl
 eg/algtest.pl
 eg/bruteforce.pl
