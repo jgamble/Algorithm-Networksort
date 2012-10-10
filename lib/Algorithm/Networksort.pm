@@ -1243,6 +1243,12 @@ that in its usual form (for example, as described in Knuth) it can handle
 a variety of inputs. But while sorting it always generates an identical set of
 comparison pairs per array size, which lends itself to sorting networks.
 
+=item 'bubble'
+
+Use a naive bubble-sort/insertion-sort algorithm. Since this algorithm
+produces more comparison pairs than the other algorithms, it is only
+useful for illustrative purposes.
+
 =item 'best'
 
 For some inputs, sorting networks have been discovered that are more efficient
