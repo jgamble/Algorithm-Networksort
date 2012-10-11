@@ -21,7 +21,7 @@ sub zero_one
 
 		$sort_string = join "", @bitlist;
 
-		return "$x [0b$x_binary] sorted to '$sort_string'." unless ($sort_string =~ $zo);
+		return "'$x_binary' ($x) sorted to '$sort_string'." unless ($sort_string =~ $zo);
 	}
 
 	return "pass";
