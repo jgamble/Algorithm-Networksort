@@ -32,7 +32,7 @@ use warnings;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.22';
+our $VERSION = '1.23';
 
 my %nw_best = (
 	(9,	# R. W. Floyd.

@@ -1,6 +1,12 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.23
+	Thu Oct 11 2012
+	- Doug Hoyte requested the addition of the sorting network
+	  equivalent of the bubble sort, for demonstration purposes
+	  only, and sent a patch to implement it and a test file to
+	  add to the t/ directory. Free code is hard to turn down,
+	  even if it is for bubble sort.
 	Tue Oct  2 2012
 	- Added a new test, svg.t. It is modeled on pod.t, and uses
 	  Test::XML::Easy. If I had had it as part of the tests
