@@ -31,6 +31,7 @@ t/bn14.t
 t/bn15.t
 t/bn16.t
 t/bn17.t
+t/bubble0407.t
 t/hibbard04.t
 t/hibbard10.t
 t/hibbard11.t
