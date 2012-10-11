@@ -13,7 +13,7 @@ use warnings;
 # Three # for "I am here" messages, four # for variable dumps.
 # Five # for nw_sort tracking.
 #
-use Smart::Comments q(####);
+#use Smart::Comments q(####);
 
 @ISA = qw(Exporter);
 
