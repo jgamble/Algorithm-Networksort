@@ -118,7 +118,7 @@ my %algname = (
 	batcher => "Batcher's Mergesort",
 	hibbard => "Hibbard's Sort",
 	best => "Best Known Sort",
-	bubble -> "Bubble Sort",
+	bubble => "Bubble Sort",
 );
 
 #
