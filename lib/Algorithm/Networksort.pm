@@ -226,6 +226,7 @@ sub nw_comparators
 	@comparators = bosenelson($inputs) if ($opts{algorithm} eq 'bosenelson');
 	@comparators = hibbard($inputs) if ($opts{algorithm} eq 'hibbard');
 	@comparators = batcher($inputs) if ($opts{algorithm} eq 'batcher');
+	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
 
 	#
 	# Instead of using the list as provided by the algorithms,
