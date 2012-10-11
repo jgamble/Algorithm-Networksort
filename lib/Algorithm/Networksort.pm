@@ -13,7 +13,7 @@ use warnings;
 # Three # for "I am here" messages, four # for variable dumps.
 # Five # for nw_sort tracking.
 #
-#use Smart::Comments q(###);
+use Smart::Comments q(####);
 
 @ISA = qw(Exporter);
 
@@ -114,10 +114,11 @@ my %nw_best = (
 # Names for the algorithm keys.
 #
 my %algname = (
-	bosenelson => "Bose-Nelson",
+	bosenelson => "Bose-Nelson Sort",
 	batcher => "Batcher's Mergesort",
-	hibbard => "Hibbard",
-	best => "Best Known",
+	hibbard => "Hibbard's Sort",
+	best => "Best Known Sort",
+	bubble -> "Bubble Sort",
 );
 
 #
@@ -199,6 +200,12 @@ sub nw_comparators
 	my %opts = @_;
 	my @comparators;
 
+	#
+	### Generating the comparators...
+	#
+	#### $inputs
+	#### %opts
+	#
 	return () if ($inputs < 2);
 	$opts{algorithm} = 'bosenelson' unless (defined $opts{algorithm});
 	$opts{grouping} = 'none' unless (defined $opts{grouping});
@@ -500,6 +507,26 @@ sub batcher
 			$r = $p;
 		}
 		$p >>= 1;
+	}
+
+	return @network;
+}
+
+#
+# @network = bubble($inputs);
+#
+# Simple bubble sort network, only for comparison purposes.
+#
+sub bubble
+{
+	my $inputs = shift;
+	my @network;
+
+	return () if ($inputs < 2);
+
+	for my $j (reverse 0 .. $inputs - 1)
+	{
+		push @network, [$_, $_ + 1] for (0 .. $j - 1);
 	}
 
 	return @network;
@@ -1214,6 +1241,12 @@ Use Batcher's Merge Exchange algorithm. Merge Exchange is a real sort, in
 that in its usual form (for example, as described in Knuth) it can handle
 a variety of inputs. But while sorting it always generates an identical set of
 comparison pairs per array size, which lends itself to sorting networks.
+
+=item 'bubble'
+
+Use a naive bubble-sort/insertion-sort algorithm. Since this algorithm
+produces more comparison pairs than the other algorithms, it is only
+useful for illustrative purposes.
 
 =item 'best'
 
