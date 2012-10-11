@@ -22,10 +22,10 @@ name: Algorithm-Networksort
 provides:
   Algorithm::Networksort:
     file: lib/Algorithm/Networksort.pm
-    version: 1.22
+    version: 1.23
 requires:
   perl: v5.8.3
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jgamble/Algorithm-Networksort.git
-version: 1.22
+version: 1.23
