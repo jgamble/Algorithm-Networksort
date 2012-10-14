@@ -1,4 +1,4 @@
-Algorithm::Networksort version 1.23
+Algorithm::Networksort version 1.24
 ===================================
 
 This module will create sorting networks, a sequence of comparisons
@@ -31,8 +31,8 @@ INSTALLATION
 Installation:
 ----------------------------------------------------------------
 The usual way.  Unpack the archive:
-	gzip -d Algorithm-Networksort-1.23.tar.gz
-	tar xvf Algorithm-Networksort-1.23.tar
+	gzip -d Algorithm-Networksort-1.24.tar.gz
+	tar xvf Algorithm-Networksort-1.24.tar
 
 This package now makes use of Module::Build, and the Build.PL script,
 but you can still use Makefile.PL, which is provided:
