@@ -552,12 +552,16 @@ sub nw_sort
 	#### $network
 	#### $array
 	#
+
+	my $swaps = 0;
+
 	foreach my $comparator (@$network)
 	{
 		my($left, $right) = @$comparator;
 
 		if (($$array[$left] <=> $$array[$right]) == 1)
 		{
+			$swaps++;
 			@$array[$left, $right] = @$array[$right, $left];
 		}
 
@@ -566,7 +570,7 @@ sub nw_sort
 		#
 	}
 
-	return $array;
+	return ($array, $swaps);
 }
 
 #
