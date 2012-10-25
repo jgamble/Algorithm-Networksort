@@ -32,7 +32,7 @@ use warnings;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.23';
+our $VERSION = '1.25';
 
 my %nw_best = (
 	(9,	# R. W. Floyd.
@@ -164,6 +164,12 @@ my %textset = (
 	gapnone => "   ",
 	gapend => "  \n",
 );
+
+#
+# Variables to track sorting statistics
+#
+my $swaps = 0;
+
 
 #
 # @algkeys = nw_algorithms();
@@ -552,6 +558,12 @@ sub nw_sort
 	#### $network
 	#### $array
 	#
+
+	#
+	# Variable $swaps is a global variable that reports back the
+	# number of exchanges.
+	#
+	$swaps = 0;
 	foreach my $comparator (@$network)
 	{
 		my($left, $right) = @$comparator;
@@ -559,6 +571,7 @@ sub nw_sort
 		if (($$array[$left] <=> $$array[$right]) == 1)
 		{
 			@$array[$left, $right] = @$array[$right, $left];
+			$swaps++;
 		}
 
 		#
@@ -567,6 +580,17 @@ sub nw_sort
 	}
 
 	return $array;
+}
+
+#
+# %sortstats = nw_sort_stats();
+#
+# Return information on the sorting network.
+#
+sub nw_sort_stats
+{
+	return (swaps => $swaps,
+		);
 }
 
 #
@@ -1558,6 +1582,38 @@ This function uses the C<< <=> >> operator for comparisons.
     my @network = nw_comparators(scalar @digits, algorithm => 'best');
     nw_sort(\@network, \@digits);
     print join(", ", @digits);
+
+=head3 nw_sort_stats()
+
+Return statistics on the last nw_sort() call. Currently only "swaps",
+a count of the number of exchanges, is returned.
+
+    my(@d, %nw_stats);
+    my @digits = (1, 8, 3, 0, 4, 7, 2, 5, 9, 6);
+    my @network_batcher = nw_comparators(scalar @digits,
+            algorithm => 'batcher');
+    my @network_bn = nw_comparators(scalar @digits,
+            algorithm => 'bosenelson');
+    my @network_hibbard = nw_comparators(scalar @digits,
+            algorithm => 'hibbard');
+
+    @d = @digits;
+    nw_sort(\@network_batcher, \@d);
+    %nw_stats = nw_sort_stats();
+    print "The Batcher Merge-Exchange network took ",
+        $nw_stats{swaps}, " exchanges to sort the array."
+
+    @d = @digits;
+    nw_sort(\@network_bn, \@d);
+    %nw_stats = nw_sort_stats();
+    print "The Bose-Nelson network took ",
+        $nw_stats{swaps}, " exchanges to sort the array."
+
+    @d = @digits;
+    nw_sort(\@network_hibbard, \@d);
+    %nw_stats = nw_sort_stats();
+    print "The Hibbard network took ",
+        $nw_stats{swaps}, " exchanges to sort the array."
 
 =head1 SEE ALSO
 
