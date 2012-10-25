@@ -7,7 +7,7 @@ my $build = Module::Build->new(
 
 	dist_abstract => 'Create Sorting Networks',
 	dist_author => ['John M. Gamble <jgamble@cpan.org>'],
-	dist_version => '1.24',  
+	dist_version => '1.25',  
 
 	requires => {
 		perl=> '5.8.3'

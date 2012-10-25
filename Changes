@@ -1,5 +1,9 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+1.25
+	Thu Oct 25 2012
+	- New function nw_sort_stats() to return information about
+	  sorting network exchange counts and other future ideas.
 1.24
 	Sun Oct 14 2012
 	- Emergency change to svg.t -- I'm doing something wrong in
