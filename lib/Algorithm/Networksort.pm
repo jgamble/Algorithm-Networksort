@@ -151,6 +151,7 @@ my %algname = (
 	hibbard => "Hibbard's Sort",
 	best => "Best Known Sort",
 	bubble => "Bubble Sort",
+	bitonic => "Bitonic Sort",
 );
 
 #
@@ -265,6 +266,7 @@ sub nw_comparators
 	@comparators = hibbard($inputs) if ($opts{algorithm} eq 'hibbard');
 	@comparators = batcher($inputs) if ($opts{algorithm} eq 'batcher');
 	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
+	@comparators = bitonic($inputs) if ($opts{algorithm} eq 'bitonic');
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -550,6 +552,104 @@ sub batcher
 
 	return @network;
 }
+
+
+
+#
+# @network = bitonic($inputs);
+#
+# Return a list of two-element lists that comprise the comparators of a
+# sorting network.
+#
+# Batcher's Bitonic sort as described here:
+# http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
+#
+sub bitonic($)
+{
+	my $inputs = shift;
+	my @network;
+
+	return () if ($inputs < 2);
+
+	my ($sort, $merge, $greatest_power_of_2_less_than);
+
+	$sort = sub {
+		my ($lo, $n, $dir) = @_;
+
+		if ($n > 1) {
+			my $m = int($n/2);
+			$sort->($lo, $m, !$dir);
+			$sort->($lo + $m, $n - $m, $dir);
+			$merge->($lo, $n, $dir);
+		}
+	};
+
+	$merge = sub {
+		my ($lo, $n, $dir) = @_;
+
+		if ($n > 1) {
+			my $m = $greatest_power_of_2_less_than->($n);
+			for (my $i=$lo; $i < $lo+$n-$m; $i++) {
+				if ($dir) {
+					push @network, [ $i, $i+$m, ];
+				} else {
+					push @network, [ $i+$m, $i, ];
+				}
+			}
+			$merge->($lo, $m, $dir);
+			$merge->($lo + $m, $n - $m, $dir);
+		}
+	};
+
+	$greatest_power_of_2_less_than = sub {
+		my $n = shift;
+		my $k = 1;
+		while ($k < $n) {
+			$k <<= 1;
+		}
+		return $k >> 1;
+	};
+
+	$sort->(0, $inputs, 1);
+
+	return @{ make_network_unidirectional(\@network) };
+}
+
+
+## This function "re-wires" a bi-directional sorting network
+## and turns it into a normal, uni-directional network.
+
+sub make_network_unidirectional($)
+{
+	my ($network_ref) = @_;
+
+	my @network = @$network_ref;
+
+	foreach my $i (0..$#network) {
+		my $comparator = $network[$i];
+		my ($x, $y) = @$comparator;
+
+		if ($x > $y) {
+			foreach my $j (($i+1)..$#network) {
+				my $j_comparator = $network[$j];
+				my ($j_x, $j_y) = @$j_comparator;
+
+				$j_comparator->[0] = $y if $x == $j_x;
+				$j_comparator->[1] = $y if $x == $j_y;
+				$j_comparator->[0] = $x if $y == $j_x;
+				$j_comparator->[1] = $x if $y == $j_y;
+			}
+			($comparator->[0], $comparator->[1]) = ($comparator->[1], $comparator->[0]);
+		}
+	}
+
+	return \@network;
+}
+
+
+
+
+
 
 #
 # @network = bubble($inputs);
@@ -1299,6 +1399,16 @@ that in its usual form (for example, as described in Knuth) it can handle
 a variety of inputs. But while sorting it always generates an identical set of
 comparison pairs per array size, which lends itself to sorting networks.
 
+=item 'bitonic'
+
+Use Batcher's bitonic algorithm. A bitonic sequence is a sequence that
+monotonically increases and then monotonically decreases. The bitonic sort
+algorithm works by recursively splitting sequences into bitonic sequences
+using so-called "half-cleaners". These bitonic sequences are then merged
+into a fully sorted sequence. Bitonic sort is a very efficient sort and
+is especially suited for implementations that can exploit network
+parallelism.
+
 =item 'bubble'
 
 Use a naive bubble-sort/insertion-sort algorithm. Since this algorithm
@@ -1706,6 +1816,23 @@ Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
 AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114.
 
 A PDF of this article may be found at L<http://www.cs.kent.edu/~batcher/sort.pdf>.
+
+=back
+
+=head2 Bitonic algorithm
+
+=over 3
+
+=item
+
+Dr. Hans Werner Lang has written a detailed discussion of the bitonic
+sort algorithm here:
+L<http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm>
+
+=item
+
+Cormen, Leiserson, Rivest, and Stein's Introduction to Algorithms,
+3rd edition, section 27.3.
 
 =back
 
