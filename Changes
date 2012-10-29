@@ -5,6 +5,7 @@ Revision history for Perl extension Algorithm::Networksort.
 	- Added two new 'best' networks for input sizes 18 and 22,
 	  discovered by Sherenaz Waleed Al-Haj Baddar and submited
 	  by Doug Hoyte.
+	- Added the bitonic() code and test file as provided by Doug Hoyte.
 	Thu Oct 25 2012
 	- New function nw_sort_stats() to return information about
 	  sorting network exchange counts (based on Doug Hoyte's

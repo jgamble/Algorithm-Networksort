@@ -24,6 +24,7 @@ t/best15.t
 t/best16.t
 t/best18.t
 t/best22.t
+t/bitonic.t
 t/bn04.t
 t/bn10.t
 t/bn11.t
