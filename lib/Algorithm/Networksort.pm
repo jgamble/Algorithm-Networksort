@@ -258,8 +258,8 @@ sub nw_comparators
 	if ($opts{algorithm} eq 'best')
 	{
 		return @{$nw_best{$inputs}} if (exists $nw_best{$inputs});
-		carp "No 'best' network know for N = $inputs.  Using $algname{bosenelson}";
-		return bosenelson($inputs);
+		carp "No 'best' network know for N = $inputs.  Using $algname{batcher}";
+		return batcher($inputs);
 	}
 
 	@comparators = bosenelson($inputs) if ($opts{algorithm} eq 'bosenelson');
@@ -411,8 +411,6 @@ sub bosenelson
 {
 	my $inputs = shift;
 
-	return () if ($inputs < 2);
-
 	return bn_split(0, $inputs);
 }
 
@@ -518,8 +516,6 @@ sub batcher
 	my $inputs = shift;
 	my @network;
 
-	return () if ($inputs < 2);
-
 	#
 	# $t = ceiling(log2($inputs)); but we'll
 	# find it using the length of the bitstring.
@@ -569,15 +565,13 @@ sub bitonic($)
 	my $inputs = shift;
 	my @network;
 
-	return () if ($inputs < 2);
-
 	my ($sort, $merge, $greatest_power_of_2_less_than);
 
 	$sort = sub {
 		my ($lo, $n, $dir) = @_;
 
 		if ($n > 1) {
-			my $m = int($n/2);
+			my $m = $n/2;
 			$sort->($lo, $m, !$dir);
 			$sort->($lo + $m, $n - $m, $dir);
 			$merge->($lo, $n, $dir);
@@ -1428,7 +1422,7 @@ arrangement are ignored.
 
 Currently more efficient sorting networks have been discoverd for inputs of
 nine through sixteen. If you choose 'best' outside of this range the module
-will fall back to Bose-Nelson.
+will fall back to Batcher's Merge Exchange algorithm.
 
 =back
 

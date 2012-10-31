@@ -1,6 +1,13 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.25
+	Tue Oct 30 2012
+	- Fall-back algorithm for 'best' option is not Batcher's Merge
+	  Exchange algorithm instead of Bose-Nelson.
+	- Checks for $inputs < 2 in the algorithm functions are pointless
+	  since the calling, exported function already checks for it.
+	- "use integer" means that int($n/2) may be written more simply
+	  as $n/2.
 	Sat Oct 27 2012
 	- Added two new 'best' networks for input sizes 18 and 22,
 	  discovered by Sherenaz Waleed Al-Haj Baddar and submited
