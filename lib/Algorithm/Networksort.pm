@@ -246,6 +246,8 @@ sub nw_comparators
 	#### %opts
 	#
 	return () if ($inputs < 2);
+	return ([0, 1]) if ($inputs == 2);
+
 	$opts{algorithm} = 'bosenelson' unless (defined $opts{algorithm});
 	$opts{grouping} = 'none' unless (defined $opts{grouping});
 
@@ -518,8 +520,6 @@ sub batcher
 	my $inputs = shift;
 	my @network;
 
-	return () if ($inputs < 2);
-
 	#
 	# $t = ceiling(log2($inputs)); but we'll
 	# find it using the length of the bitstring.
@@ -538,7 +538,7 @@ sub batcher
 
 		while ($d > 0)
 		{
-			for (my $i = 0; $i < $inputs - $d; $i++)
+			for my $i (0 .. $inputs - $d - 1)
 			{
 				push @network, [$i, $i + $d] if (($i & $p) == $r);
 			}
@@ -568,8 +568,6 @@ sub bitonic($)
 {
 	my $inputs = shift;
 	my @network;
-
-	return () if ($inputs < 2);
 
 	my ($sort, $merge, $greatest_power_of_2_less_than);
 
@@ -660,8 +658,6 @@ sub bubble
 {
 	my $inputs = shift;
 	my @network;
-
-	return () if ($inputs < 2);
 
 	for my $j (reverse 0 .. $inputs - 1)
 	{
