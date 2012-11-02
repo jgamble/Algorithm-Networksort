@@ -413,8 +413,6 @@ sub bosenelson
 {
 	my $inputs = shift;
 
-	return () if ($inputs < 2);
-
 	return bn_split(0, $inputs);
 }
 
@@ -575,7 +573,7 @@ sub bitonic
 		my ($lo, $n, $dir) = @_;
 
 		if ($n > 1) {
-			my $m = int($n/2);
+			my $m = $n/2;
 			$sort->($lo, $m, !$dir);
 			$sort->($lo + $m, $n - $m, $dir);
 			$merge->($lo, $n, $dir);
@@ -1419,7 +1417,7 @@ arrangement are ignored.
 
 Currently more efficient sorting networks have been discoverd for inputs of
 nine through sixteen. If you choose 'best' outside of this range the module
-will fall back to Bose-Nelson.
+will fall back to Batcher's Merge Exchange algorithm.
 
 =back
 
