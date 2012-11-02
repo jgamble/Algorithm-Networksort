@@ -260,15 +260,15 @@ sub nw_comparators
 	if ($opts{algorithm} eq 'best')
 	{
 		return @{$nw_best{$inputs}} if (exists $nw_best{$inputs});
-		carp "No 'best' network know for N = $inputs.  Using $algname{bosenelson}";
-		return bosenelson($inputs);
+		carp "No 'best' network know for N = $inputs.  Using $algname{batcher}";
+		return batcher($inputs);
 	}
 
 	@comparators = bosenelson($inputs) if ($opts{algorithm} eq 'bosenelson');
 	@comparators = hibbard($inputs) if ($opts{algorithm} eq 'hibbard');
 	@comparators = batcher($inputs) if ($opts{algorithm} eq 'batcher');
-	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
 	@comparators = bitonic($inputs) if ($opts{algorithm} eq 'bitonic');
+	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -564,7 +564,7 @@ sub batcher
 # Batcher's Bitonic sort as described here:
 # http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
 #
-sub bitonic($)
+sub bitonic
 {
 	my $inputs = shift;
 	my @network;
@@ -617,7 +617,7 @@ sub bitonic($)
 ## This function "re-wires" a bi-directional sorting network
 ## and turns it into a normal, uni-directional network.
 
-sub make_network_unidirectional($)
+sub make_network_unidirectional
 {
 	my ($network_ref) = @_;
 
@@ -643,11 +643,6 @@ sub make_network_unidirectional($)
 
 	return \@network;
 }
-
-
-
-
-
 
 #
 # @network = bubble($inputs);
