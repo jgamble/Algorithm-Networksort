@@ -596,15 +596,9 @@ sub bitonic
 
 			my $m = 1 << ($t - 1);
 
-			#for (my $i = $lo; $i < $lo+$n-$m; $i++)
 			for my $i ($lo .. $lo+$n-$m-1)
 			{
 				push @network, ($dir)? [$i, $i+$m]: [$i+$m, $i];
-				#if ($dir) {
-				#	push @network, [ $i, $i+$m, ];
-				#} else {
-				#	push @network, [ $i+$m, $i, ];
-				#}
 			}
 
 			$merge->($lo, $m, $dir);
