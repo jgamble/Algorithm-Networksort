@@ -307,12 +307,14 @@ sub hibbard
 	my($bit, $xbit, $ybit);
 
 	#
-	# $lastbit = ceiling(log2($inputs - 1)); but we'll
+	# $t = ceiling(log2($inputs - 1)); but we'll
 	# find it using the length of the bitstring.
 	#
-	my $lastbit = unpack("B32", pack("N", $inputs - 1));
-	$lastbit =~ s/^0+//;
-	$lastbit = 1 << (length $lastbit);
+	my $t = unpack("B32", pack("N", $inputs - 1));
+	$t =~ s/^0+//;
+	$t = length $t;
+
+	my $lastbit = 1 << $t;
 
 	#
 	# $x and $y are the comparator endpoints.
@@ -567,7 +569,7 @@ sub bitonic
 	my $inputs = shift;
 	my @network;
 
-	my ($sort, $merge, $greatest_power_of_2_less_than);
+	my ($sort, $merge);
 
 	$sort = sub {
 		my ($lo, $n, $dir) = @_;
@@ -584,26 +586,28 @@ sub bitonic
 		my ($lo, $n, $dir) = @_;
 
 		if ($n > 1) {
-			my $m = $greatest_power_of_2_less_than->($n);
-			for (my $i=$lo; $i < $lo+$n-$m; $i++) {
+			#
+			# $t = ceiling(log2($n - 1)); but we'll
+			# find it using the length of the bitstring.
+			#
+			my $t = unpack("B32", pack("N", $n - 1));
+			$t =~ s/^0+//;
+			$t = length $t;
+
+			my $m = 1 << ($t - 1);
+
+			for (my $i = $lo; $i < $lo+$n-$m; $i++)
+			{
 				if ($dir) {
 					push @network, [ $i, $i+$m, ];
 				} else {
 					push @network, [ $i+$m, $i, ];
 				}
 			}
+
 			$merge->($lo, $m, $dir);
 			$merge->($lo + $m, $n - $m, $dir);
 		}
-	};
-
-	$greatest_power_of_2_less_than = sub {
-		my $n = shift;
-		my $k = 1;
-		while ($k < $n) {
-			$k <<= 1;
-		}
-		return $k >> 1;
 	};
 
 	$sort->(0, $inputs, 1);
