@@ -1,6 +1,15 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.25
+	Tue Nov 6 2012
+	- Worked on bitonic() code. Use existing pack/unpack code to
+	  determine power-of-two value, this replaces the
+	  greater_power_of_2_less_than() function.
+	- Made loop a little more perlish by using the '..' operator.
+	- Added 'bitonic' to the keyword list.
+	- Added a get_options parameter in Build.PL. Looking towards
+	  an option to automatically skip long-running tests in
+	  non-development situations.
 	Tue Oct 30 2012
 	- Fall-back algorithm for 'best' option is not Batcher's Merge
 	  Exchange algorithm instead of Bose-Nelson.
