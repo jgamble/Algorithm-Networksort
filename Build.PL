@@ -29,15 +29,10 @@ my $build = Module::Build->new(
 
 	meta_merge => {
 		keywords => [qw(sort sorting-network
-			batcher hibbard bose-nelson)],
+			batcher bitonic hibbard bose-nelson)],
 
 		resources => {
 			repository => 'git://github.com/jgamble/Algorithm-Networksort.git',
-#			repository => {
-#				url => 'git://github.com/jgamble/Algorithm-Networksort.git',
-#				web => 'https://github.com/jgamble/Algorithm-Networksort',
-#				type => 'git',
-#			},
 		},
 	},
 
