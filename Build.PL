@@ -21,6 +21,17 @@ my $build = Module::Build->new(
 		'Test::Simple' => 0
 	},
 
+	#
+	# Some test files take a long time to run. To save
+	# the testers some processing time, skip those tests
+	# by default (this is set in the individual test files).
+	# Use the --Testall option to run all tests in the t/
+	# directory.
+	#
+	get_options => {
+		Testall => {type => '!'},
+	},
+
 	license => 'perl',
 	create_license => 1,
 	create_readme => 0,
