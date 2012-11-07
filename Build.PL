@@ -2,6 +2,20 @@ use Module::Build;
 use strict;
 use warnings;
 
+my $test_all = 0;
+
+my $class = Module::Build->subclass(
+	class => "Module::Build::Custom",
+	code => <<'SUBCLASS' );
+
+sub ACTION_test {
+	my $self = shift;
+
+	local $ENV{RELEASE_TESTING} = 1 if ($test_all);
+	$self->SUPER::ACTION_test;
+}
+SUBCLASS
+
 my $build = Module::Build->new(
 	module_name => 'Algorithm::Networksort',
 
@@ -29,7 +43,7 @@ my $build = Module::Build->new(
 	# directory.
 	#
 	get_options => {
-		Testall => {type => '!'},
+		Testall => {store => \$test_all},
 	},
 
 	license => 'perl',
