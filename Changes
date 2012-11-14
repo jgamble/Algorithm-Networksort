@@ -1,6 +1,9 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.25
+	Tue Nov 13 2012
+	- Long-running tests now check for $ENV{AUTHOR_TESTING} = 1,
+	  and skip if it doesn't.
 	Tue Nov 6 2012
 	- Worked on bitonic() code. Use existing pack/unpack code to
 	  determine power-of-two value, this replaces the
