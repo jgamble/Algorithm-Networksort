@@ -1,20 +1,20 @@
 use strict;
 
-use Test::Simple tests => 14;
-
 use Algorithm::Networksort qw(:all);
+use Test::More;
+
+our $author_testing = $ENV{AUTHOR_TESTING};
+our @input_range = $author_testing? (3..16): (3..9);
 
 require "t/zero_one.pl";
 
 my $algorithm = 'bitonic';
-my @network;
-my $status;
 
-for my $inputs (3..16)
+for my $inputs (@input_range)
 {
-	@network = nw_comparators($inputs, algorithm=>$algorithm);
+	my @network = nw_comparators($inputs, algorithm=>$algorithm);
+	my $status = zero_one($inputs, \@network);
 
-	$status = zero_one($inputs, \@network);
 	if ($status eq "pass")
 	{
 		ok(1, "$algorithm, N=$inputs");
@@ -24,4 +24,6 @@ for my $inputs (3..16)
 		ok(0, "$algorithm, N=$inputs, $status");
 	}
 }
+
+done_testing(scalar @input_range);
 

@@ -2,7 +2,7 @@ use Module::Build;
 use strict;
 use warnings;
 
-my $test_all = 0;
+our $test_all = 0;
 
 my $class = Module::Build->subclass(
 	class => "Module::Build::Custom",
@@ -11,12 +11,13 @@ my $class = Module::Build->subclass(
 sub ACTION_test {
 	my $self = shift;
 
-	local $ENV{RELEASE_TESTING} = 1 if ($test_all);
+	local $ENV{AUTHOR_TESTING} = 1 if ($test_all);
 	$self->SUPER::ACTION_test;
 }
 SUBCLASS
 
-my $build = Module::Build->new(
+#my $build = Module::Build->new(
+my $build = $class->new(
 	module_name => 'Algorithm::Networksort',
 
 	dist_abstract => 'Create Sorting Networks',
