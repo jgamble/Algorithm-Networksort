@@ -2,8 +2,6 @@ use Module::Build;
 use strict;
 use warnings;
 
-our $test_all = 0;
-
 my $class = Module::Build->subclass(
 	class => "Module::Build::Custom",
 	code => <<'SUBCLASS' );
@@ -11,7 +9,16 @@ my $class = Module::Build->subclass(
 sub ACTION_test {
 	my $self = shift;
 
-	local $ENV{AUTHOR_TESTING} = 1 if ($test_all);
+	#
+	# Some test files take a long time to run. To save
+	# the testers some processing time, skip those tests
+	# by default (this is determined within the individual
+	# test files).  Use the --Testlong option to run all tests
+	# in the t/ directory.
+	#
+	my %args = $self->args;
+
+	$ENV{AUTHOR_TESTING} = 1 if (exists $args{Testlong});
 	$self->SUPER::ACTION_test;
 }
 SUBCLASS
@@ -34,17 +41,6 @@ my $build = $class->new(
 
 	build_requires => {
 		'Test::Simple' => 0
-	},
-
-	#
-	# Some test files take a long time to run. To save
-	# the testers some processing time, skip those tests
-	# by default (this is set in the individual test files).
-	# Use the --Testall option to run all tests in the t/
-	# directory.
-	#
-	get_options => {
-		Testall => {store => \$test_all},
 	},
 
 	license => 'perl',
