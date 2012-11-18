@@ -1,6 +1,8 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.25
+	Sat Nov 17 2012
+	- Upgrage tests to use the is() function from Test::More.
 	Fri Nov 16 2012
 	- Fixed the code in Build.PL that would set $ENV{AUTHOR_TESTING}.
 	  All tests, even the lengthy ones, are now run when using
