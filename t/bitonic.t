@@ -14,16 +14,7 @@ for my $inputs (@input_range)
 {
 	my @network = nw_comparators($inputs, algorithm=>$algorithm);
 	my $status = zero_one($inputs, \@network);
-
-	if ($status eq "pass")
-	{
-		ok(1, "$algorithm, N=$inputs");
-	}
-	else
-	{
-		ok(0, "$algorithm, N=$inputs, $status");
-	}
+	is($status, "pass", "$algorithm, N=$inputs, $status");
 }
 
 done_testing(scalar @input_range);
-

@@ -1,4 +1,4 @@
-use Test::Simple tests => 2;
+use Test::More tests => 2;
 
 use Algorithm::Networksort qw(:all);
 
@@ -12,13 +12,5 @@ for my $inputs (4,7)
 {
 	@network = nw_comparators($inputs, algorithm=>$algorithm);
 	$status = zero_one($inputs, \@network);
-	if ($status eq "pass")
-	{
-		ok(1, "$algorithm, N=$inputs");
-	}
-	else
-	{
-		ok(0, "$algorithm, N=$inputs, $status");
-	}
+	is($status, "pass", "$algorithm, N=$inputs, $status");
 }
-

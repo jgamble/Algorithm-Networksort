@@ -1,7 +1,7 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl hibbard04.t'
 
-use Test::Simple tests => 6;
+use Test::More tests => 6;
 
 use Algorithm::Networksort qw(:all);
 
@@ -15,13 +15,5 @@ for my $inputs (4..9)
 {
 	@network = nw_comparators($inputs, algorithm=>$algorithm);
 	$status = zero_one($inputs, \@network);
-	if ($status eq "pass")
-	{
-		ok(1, "$algorithm, N=$inputs");
-	}
-	else
-	{
-		ok(0, "$algorithm, N=$inputs, $status");
-	}
+	is($status, "pass", "$algorithm, N=$inputs, $status");
 }
-
