@@ -1,6 +1,12 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.25
+	Sun Nov 18 2012
+	- Consolidated the "algorithm" test files into one file,
+	  abecedarian.t. Now that we're using $ENV{AUTHOR_TESTING},
+	  we can consolidate test files without worrying about
+	  tests timing out on CPAN testers' machines.
+	- Simplified code in the "best" test files.
 	Sat Nov 17 2012
 	- Upgrage tests to use the is() function from Test::More.
 	Fri Nov 16 2012
