@@ -29,7 +29,7 @@ my $build = $class->new(
 
 	dist_abstract => 'Create Sorting Networks',
 	dist_author => ['John M. Gamble <jgamble@cpan.org>'],
-	dist_version => '1.25',  
+	dist_version => '1.30',  
 
 	requires => {
 		perl=> '5.8.3'
@@ -40,7 +40,7 @@ my $build = $class->new(
 	},
 
 	build_requires => {
-		'Test::Simple' => 0
+		'Test::More' => 0,
 	},
 
 	license => 'perl',
@@ -51,7 +51,7 @@ my $build = $class->new(
 
 	meta_merge => {
 		keywords => [qw(sort sorting-network
-			batcher bitonic hibbard bose-nelson)],
+			batcher bitonic hibbard bose-nelson bubble)],
 
 		resources => {
 			repository => 'git://github.com/jgamble/Algorithm-Networksort.git',
