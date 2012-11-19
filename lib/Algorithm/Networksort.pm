@@ -32,7 +32,7 @@ use warnings;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.25';
+our $VERSION = '1.30';
 
 my %nw_best = (
 	(9,	# R. W. Floyd.
@@ -1416,8 +1416,8 @@ other networks with an equally low comparator count but with a different
 arrangement are ignored.
 
 Currently more efficient sorting networks have been discoverd for inputs of
-nine through sixteen. If you choose 'best' outside of this range the module
-will fall back to Batcher's Merge Exchange algorithm.
+nine through sixteen, eighteen, and twenty-two. If you choose 'best' outside
+of this range the module will fall back to Batcher's Merge Exchange algorithm.
 
 =back
 
