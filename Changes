@@ -1,6 +1,13 @@
 Revision history for Perl extension Algorithm::Networksort.
 
-1.25
+1.30
+	Mon Nov 19 2012
+	- Update the version number everywhere.
+	- Update documentation to make sure 'bitonic' is mentioned.
+	- Got svg.t to work correctly in systems that don't have
+	  Test::XML::Easy installed.
+	- Heavily update README to cover testing, and Doug Hoyte's
+	  contributions.
 	Sun Nov 18 2012
 	- Consolidated the "algorithm" test files into one file,
 	  abecedarian.t. Now that we're using $ENV{AUTHOR_TESTING},
