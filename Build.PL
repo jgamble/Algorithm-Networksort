@@ -13,8 +13,9 @@ sub ACTION_test {
 	# Some test files take a long time to run. To save
 	# the testers some processing time, skip those tests
 	# by default (this is determined within the individual
-	# test files).  Use the --Testlong option to run all tests
-	# in the t/ directory.
+	# test files).  Use the --Testlong option to set the
+	# AUTHOR_TESTING environment variable, which the
+	# longer-running test files will check for.
 	#
 	my %args = $self->args;
 
