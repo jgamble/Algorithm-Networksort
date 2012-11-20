@@ -1725,8 +1725,6 @@ a count of the number of exchanges, is returned.
             algorithm => 'batcher');
     my @network_bn = nw_comparators(scalar @digits,
             algorithm => 'bosenelson');
-    my @network_hibbard = nw_comparators(scalar @digits,
-            algorithm => 'hibbard');
 
     @d = @digits;
     nw_sort(\@network_batcher, \@d);
@@ -1740,11 +1738,10 @@ a count of the number of exchanges, is returned.
     print "The Bose-Nelson network took ",
         $nw_stats{swaps}, " exchanges to sort the array."
 
-    @d = @digits;
-    nw_sort(\@network_hibbard, \@d);
-    %nw_stats = nw_sort_stats();
-    print "The Hibbard network took ",
-        $nw_stats{swaps}, " exchanges to sort the array."
+=head1 ACKNOWLEDGMENTS
+
+Doug Hoyte provided the code for the bitonic sort algorithm and the bubble sort,
+and the idea for what became the L<nw_sort_stats()> function.
 
 =head1 SEE ALSO
 
@@ -1797,20 +1794,19 @@ T. N. Hibbard, "A Simple Sorting Algorithm", Journal of the ACM Vol. 10, 1963, p
 Code for Kenneth Batcher's Merge Exchange algorithm was derived from Knuth's
 The Art of Computer Programming, Vol. 3, section 5.2.2.
 
-Batcher has written two other sorting algorithms that can generate network
-sorting pairs, the "Odd-Even" algorithm and the "Bitonic" algorithm. His
-web site (L<http://www.cs.kent.edu/~batcher/>) lists his publications, including:
-
-Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
-AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114.
-
-A PDF of this article may be found at L<http://www.cs.kent.edu/~batcher/sort.pdf>.
-
 =back
 
-=head2 Bitonic algorithm
+=head2 Batcher's Bitonic algorithm
 
 =over 3
+
+=item
+
+Kenneth Batcher, "Sorting Networks and their Applications", Proc. of the
+AFIPS Spring Joint Computing Conf., Vol. 32, 1968, pp. 307-3114. A PDF of
+this article may be found at L<http://www.cs.kent.edu/~batcher/sort.pdf>.
+
+The paper discusses both the Odd-Even Merge algorithm and the Bitonic algorithm.
 
 =item
 
@@ -1820,8 +1816,13 @@ L<http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.ht
 
 =item
 
-Cormen, Leiserson, Rivest, and Stein's Introduction to Algorithms,
-3rd edition, section 27.3.
+T. H. Cormen, E. E. Leiserson, R. L. Rivest, Introduction to Algorithms,
+first edition, McGraw-Hill, 1990, section 28.3.
+
+=item
+
+T. H. Cormen, E. E. Leiserson, R. L. Rivest, C. Stein, Introduction to Algorithms,
+2nd edition, McGraw-Hill, 2001, section 27.3.
 
 =back
 
@@ -1839,6 +1840,12 @@ networks with nine inputs", L<http://www.eng.unt.edu/ian/pubs/snverify.pdf>.
 The Evolving Non-Determinism (END) algorithm has found more efficient
 sorting networks: L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
 
+=item
+
+The 18 and 22 input networks found by Sherenaz Waleed Al-Haj Baddar
+are described in his paper "Finding Better Sorting Networks" at
+L<http://etd.ohiolink.edu/view.cgi?acc_num=kent1239814529>.
+
 =back
 
 =head2 Algorithm discussion
@@ -1853,8 +1860,8 @@ Redwood City, CA, 1998.
 
 =item
 
-T. H. Cormen, E. E. Leiserson, R. L. Rivest, Introduction to Algorithms,
-McGraw-Hill, 1990.
+Kenneth Batcher's web site (L<http://www.cs.kent.edu/~batcher/>) lists
+his publications, including his paper listed above.
 
 =back
 
