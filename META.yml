@@ -3,7 +3,7 @@ abstract: 'Create Sorting Networks'
 author:
   - 'John M. Gamble <jgamble@cpan.org>'
 build_requires:
-  Test::Simple: 0
+  Test::More: 0
 configure_requires:
   Module::Build: 0.4
 dynamic_config: 0
@@ -12,8 +12,10 @@ keywords:
   - sort
   - sorting-network
   - batcher
+  - bitonic
   - hibbard
   - bose-nelson
+  - bubble
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -22,10 +24,10 @@ name: Algorithm-Networksort
 provides:
   Algorithm::Networksort:
     file: lib/Algorithm/Networksort.pm
-    version: 1.23
+    version: 1.30
 requires:
   perl: v5.8.3
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jgamble/Algorithm-Networksort.git
-version: 1.24
+version: 1.30

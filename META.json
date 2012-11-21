@@ -9,8 +9,10 @@
       "sort",
       "sorting-network",
       "batcher",
+      "bitonic",
       "hibbard",
-      "bose-nelson"
+      "bose-nelson",
+      "bubble"
    ],
    "license" : [
       "perl_5"
@@ -23,7 +25,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Test::Simple" : "0"
+            "Test::More" : "0"
          }
       },
       "configure" : {
@@ -40,7 +42,7 @@
    "provides" : {
       "Algorithm::Networksort" : {
          "file" : "lib/Algorithm/Networksort.pm",
-         "version" : "1.23"
+         "version" : "1.30"
       }
    },
    "release_status" : "stable",
@@ -52,5 +54,5 @@
          "url" : "git://github.com/jgamble/Algorithm-Networksort.git"
       }
    },
-   "version" : "1.24"
+   "version" : "1.30"
 }
