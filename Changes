@@ -1,6 +1,9 @@
 Revision history for Perl extension Algorithm::Networksort.
 
 1.30
+	Tue Nov 20 2012
+	- Updated the references in the POD documentation.
+	- Time to upload to CPAN.
 	Mon Nov 19 2012
 	- Update the version number everywhere.
 	- Update documentation to make sure 'bitonic' is mentioned.
