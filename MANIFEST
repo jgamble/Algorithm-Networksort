@@ -7,6 +7,7 @@ META.json
 META.yml
 README
 lib/Algorithm/Networksort.pm
+t/abecedarian.t
 t/best09.t
 t/best12.t
 t/best13.t
