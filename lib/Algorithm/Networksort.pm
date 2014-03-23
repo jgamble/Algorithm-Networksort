@@ -152,6 +152,7 @@ my %algname = (
 	best => "Best Known Sort",
 	bubble => "Bubble Sort",
 	bitonic => "Bitonic Sort",
+	pairwise => "Parberry's Pairwise Sort",
 );
 
 #
@@ -208,7 +209,7 @@ my $swaps = 0;
 # @algkeys = nw_algorithms();
 #
 # Return a list algorithm choices. Each one is a valid key
-# for the nw_comparator() algorithm key.
+# for the nw_comparators() algorithm key.
 #
 sub nw_algorithms
 {
@@ -1311,7 +1312,7 @@ postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
 None by default. There is only one available export tag, ':all', which
 exports the functions to create and use sorting networks. The functions are
-nw_algorithms(), nw_algorithm_name(), nw_comparator(), nw_format(), nw_graph(),
+nw_algorithms(), nw_algorithm_name(), nw_comparators(), nw_format(), nw_graph(),
 nw_color(), nw_group(), and nw_sort().
 
 =head2 Functions
@@ -1319,19 +1320,19 @@ nw_color(), nw_group(), and nw_sort().
 =head3 nw_algorithms()
 
 Return a list algorithm choices. Each one is a valid value
-for the nw_comparator() algorithm key.
+for the nw_comparators() algorithm key.
 
 =head3 nw_algorithm_name()
 
 Return the full text name of the algorithm, given its key name.
 
-=head3 nw_comparator()
+=head3 nw_comparators()
 
-    @network = nw_comparator($inputs);
+    @network = nw_comparators($inputs);
 
-    @network1 = nw_comparator($inputs, algorithm => $alg);
+    @network1 = nw_comparators($inputs, algorithm => $alg);
 
-    @network2 = nw_comparator($inputs, algorithm => $alg, grouping => $grouptype);
+    @network2 = nw_comparators($inputs, algorithm => $alg, grouping => $grouptype);
 
 Returns a list of comparators that can sort B<$inputs>
 items. The algorithm for generating the list may be chosen, but by default the
