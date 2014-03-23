@@ -4,6 +4,7 @@ Revision history for Perl extension Algorithm::Networksort.
 	Sat Mar 22 2012
 	- Good grief, I mis-spelled nw_comparators() in the
 	  documentation.
+	- And I left out abecedarian.t in the MANIFEST.
 1.30
 	Tue Nov 20 2012
 	- Updated the references in the POD documentation.
