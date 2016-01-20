@@ -13,8 +13,10 @@ use warnings;
 
 %EXPORT_TAGS = (
 	'all' => [ qw(
-		nw_best
-		nw_best_key
+		nw_best_comparators
+		nw_best_inputs
+		nw_best_names
+		nw_best_title
 	) ],
 );
 
@@ -25,7 +27,7 @@ our $VERSION = '1.30';
 #
 # The hashes represent each network, with a short, hopefully descriptive, key.
 #
-my %nw_best = (
+my %nw_best_by_name = (
 	floyd09 => {
 		inputs => 9,
 		depth => 0,
@@ -220,8 +222,8 @@ my %nw_best = (
 		[[1,2], [3,4], [5,6], [7,8], [9,10], [11,12], [13,14], [15,16],
 		[2,4], [6,8], [10,12], [14,16], [1,3], [5,7], [9,11], [13,15],
 		[4,8], [12,16], [3,7], [11,15], [2,6], [10,14], [1,5], [9,13],
-		[0,3], [4,7], [8,16], [1,13], [14,15], [6,2], [5,11], [2,10],
-		[1,16], [3,6], [7,15], [4,14], [0,13], [2,5], [8.9], [10,11],
+		[0,3], [4,7], [8,16], [1,13], [14,15], [6,12], [5,11], [2,10],
+		[1,16], [3,6], [7,15], [4,14], [0,13], [2,5], [8,9], [10,11],
 		[0,1], [2,8], [9,15], [3,4], [7,11], [12,14], [6,13], [5,10],
 		[2,15], [4,10], [11,13], [3,8], [9,12], [1,5], [6,7], [1,3],
 		[4,6], [7,9], [10,11], [13,15], [0,2], [5,8], [12,14], [0,1],
@@ -399,9 +401,9 @@ my %nw_best_by_input = (
 #
 BEGIN
 {
-	for my $k (keys %nw_best)
+	for my $k (keys %nw_best_by_name)
 	{
-		my $inputs = ${$nw_best{$k}}{inputs};
+		my $inputs = ${$nw_best_by_name{$k}}{inputs};
 		if (exists $nw_best_by_input{$k})
 		{
 			push @{$nw_best_by_input{$inputs}}, $k;
@@ -414,26 +416,81 @@ BEGIN
 }
 
 #
-# @network = nw_best($key, %options);
+# Return a list of the available inputs given a name for known 'best' networks.
+#
+sub nw_best_inputs
+{
+	my($name) = @_;
+
+	return keys %nw_best_by_input unless (defined $name);
+
+	unless (exists $nw_best_by_name{$name})
+	{
+		carp "No 'best' sorting networks exist for name '$name'";
+		return ();
+	}
+
+	return ($nw_best_by_name{$name}{inputs});
+}
+
+#
+# Return a list of keys for the 'best' networks given
+# the number of inputs needed to sort.
+#
+sub nw_best_names
+{
+	my($inputs) = @_;
+
+	return keys %nw_best_by_name unless (defined $inputs);
+
+	unless (exists $nw_best_by_input{$inputs})
+	{
+		carp "No 'best' sorting networks exist for size $inputs";
+		return ();
+	}
+
+	return @{$nw_best_by_input{$inputs}};
+}
+
+#
+# @network = nw_best_title($key);
+#
+# The function that finds the title of the network.
+#
+sub nw_best_title
+{
+	my $key = shift;
+	
+	unless (exists $nw_best_by_name{$key})
+	{
+		carp "Unknown 'best' name '$key'.";
+		return ();
+	}
+
+	return $nw_best_by_name{$key}{title};
+}
+
+#
+# @network = nw_best_comparators($key, %options);
 #
 # The function that finds the network.  Return a list of comparators (a
 # two-item list) that will sort an n-item list.
 #
-sub nw_best
+sub nw_best_comparators
 {
 	my $key = shift;
 	my(%opts) = @_;
 	my @comparators;
 	my $inputs;
 	
-	unless (exists $nw_best{$key})
+	unless (exists $nw_best_by_name{$key})
 	{
 		carp "Unknown 'best' key '$key'.";
 		return ();
 	}
 
-	@comparators = @{$nw_best{$key}{comparators}};
-	$inputs = ${$nw_best{$key}}{inputs};
+	@comparators = @{$nw_best_by_name{$key}{comparators}};
+	$inputs = ${$nw_best_by_name{$key}}{inputs};
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -453,23 +510,6 @@ sub nw_best
 	}
 
 	return @comparators;
-}
-
-#
-# Return a list of keys for the 'best' networks given
-# the number of inputs needed to sort.
-#
-sub nw_best_key
-{
-	my($inputs) = @_;
-	
-	unless (exists $nw_best_by_input{$inputs})
-	{
-		carp;
-		return ();
-	}
-
-	return @{$nw_best_by_input{$inputs}};
 }
 
 
