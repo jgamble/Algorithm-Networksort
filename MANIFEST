@@ -8,6 +8,7 @@ META.yml
 README
 lib/Algorithm/Networksort.pm
 lib/Algorithm/Networksort/Best.pm
+t/00-load.t
 t/abecedarian.t
 t/best.t
 t/bubble0407.t
