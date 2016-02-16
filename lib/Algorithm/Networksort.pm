@@ -153,6 +153,7 @@ my %algname = (
 	bubble => "Bubble Sort",
 	bitonic => "Bitonic Sort",
 	pairwise => "Parberry's Pairwise Sort",
+	oddeventransposition => "Odd-Even Transposition Sort",
 );
 
 #
@@ -270,6 +271,7 @@ sub nw_comparators
 	@comparators = batcher($inputs) if ($opts{algorithm} eq 'batcher');
 	@comparators = bitonic($inputs) if ($opts{algorithm} eq 'bitonic');
 	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
+	@comparators = oddeventransposition($inputs) if ($opts{algorithm} eq 'oddeventransposition');
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -656,6 +658,30 @@ sub bubble
 	for my $j (reverse 0 .. $inputs - 1)
 	{
 		push @network, [$_, $_ + 1] for (0 .. $j - 1);
+	}
+
+	return @network;
+}
+
+#
+# @network = bubble($inputs);
+#
+# Simple odd-even transposition network, only for comparison purposes.
+#
+sub oddeventransposition {
+	my $inputs = shift;
+	my @network;
+
+	my $odd;
+
+	for my $stage (0 .. $inputs - 1)
+	{
+		for (my $j = $odd ? 1 : 0; $j < $inputs - 1; $j += 2)
+		{
+			push @network, [$j, $j+1];
+		}
+
+		$odd = !$odd;
 	}
 
 	return @network;
@@ -1404,6 +1430,12 @@ parallelism.
 Use a naive bubble-sort/insertion-sort algorithm. Since this algorithm
 produces more comparison pairs than the other algorithms, it is only
 useful for illustrative purposes.
+
+=item 'oddeventransposition'
+
+Use a naive odd-even transposition sort. This is a primitive sort closely
+related to bubble sort except it is more parallel. Because other algorithms
+are more efficient, this sort is included mostly for illustrative purposes.
 
 =item 'best'
 
