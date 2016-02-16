@@ -45,6 +45,7 @@ my %algname = (
 	bitonic => "Bitonic Sort",
 	oddeventransposition => "Odd-Even Transposition Sort",
 	balanced => "Balanced",
+	oddevenmerge => "Batcher's Odd-Even Merge Sort",
 );
 
 #
@@ -157,6 +158,7 @@ sub nw_comparators
 	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
 	@comparators = oddeventransposition($inputs) if ($opts{algorithm} eq 'oddeventransposition');
 	@comparators = balanced($inputs) if ($opts{algorithm} eq 'balanced');
+	@comparators = oddevenmerge($inputs) if ($opts{algorithm} eq 'oddevenmerge');
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -610,6 +612,73 @@ sub balanced {
 	return @network;
 }
 
+
+#
+# @network = oddevenmerge($inputs);
+#
+# Batcher's odd-even merge sort as described here:
+# http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/networks/oemen.htm
+# http://cs.engr.uky.edu/~lewis/essays/algorithms/sortnets/sort-net.html
+#
+sub oddevenmerge {
+	my $inputs = shift;
+	my @network;
+
+	#
+	# $t = ceiling(log2($inputs - 1)); but we'll
+	# find it using the length of the bitstring.
+	#
+	my $t = unpack("B32", pack("N", $inputs - 1));
+	$t =~ s/^0+//;
+	$t = length $t;
+
+	my ($add_elem, $sort, $merge);
+
+	$add_elem = sub {
+		my ($i, $j) = @_;
+
+		push @network, [$i, $j]
+			if $i < $inputs && $j < $inputs;
+	};
+
+	$sort = sub {
+		my ($lo, $n) = @_;
+
+		if ($n > 1)
+		{
+			my $m = int($n / 2);
+
+			$sort->($lo, $m);
+			$sort->($lo + $m, $m);
+			$merge->($lo, $n, 1);
+		}
+	};
+
+	$merge = sub {
+		my ($lo, $n, $r) = @_;
+
+		my $m = int($r * 2);
+
+		if ($m < $n)
+		{
+			$merge->($lo, $n, $m); # even
+			$merge->($lo + $r, $n, $m); # odd
+
+			for (my $i=$lo + $r; $i + $r < $lo + $n; $i += $m)
+			{
+				$add_elem->($i, $i + $r);
+			}
+		}
+		else
+		{
+			$add_elem->($lo, $lo + $r);
+		}
+	};
+
+	$sort->(0, 2**$t);
+
+	return @network;
+}
 
 #
 # $array_ref = nw_sort(\@network, \@array);
@@ -1328,6 +1397,13 @@ using so-called "half-cleaners". These bitonic sequences are then merged
 into a fully sorted sequence. Bitonic sort is a very efficient sort and
 is especially suited for implementations that can exploit network
 parallelism.
+
+=item oddevenmerge
+
+Use Batcher's Odd-Even Merge algorithm. This sort works in a similar way
+to a regular merge sort, except that in the merge phase the sorted halves
+are merged by comparing even elements separately from odd elements. This
+algorithm creates very efficient networks in both comparators and stages.
 
 =item 'bubble'
 
