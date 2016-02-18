@@ -22,7 +22,7 @@ require "t/zero_one.pl";
 #
 our $author_testing = $ENV{AUTHOR_TESTING};
 our @input_range = $author_testing? (3..17): (3..10);
-our @algorithms = qw(batcher bitonic bosenelson hibbard);
+our @algorithms = qw(balanced batcher bitonic bosenelson hibbard);
 plan tests => (scalar @input_range  * scalar @algorithms);
 
 for my $algorithm (@algorithms)

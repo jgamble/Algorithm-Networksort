@@ -44,6 +44,7 @@ my %algname = (
 	bubble => "Bubble Sort",
 	bitonic => "Bitonic Sort",
 	oddeventransposition => "Odd-Even Transposition Sort",
+	balanced => "Balanced",
 );
 
 #
@@ -155,6 +156,7 @@ sub nw_comparators
 	@comparators = bitonic($inputs) if ($opts{algorithm} eq 'bitonic');
 	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
 	@comparators = oddeventransposition($inputs) if ($opts{algorithm} eq 'oddeventransposition');
+	@comparators = balanced($inputs) if ($opts{algorithm} eq 'balanced');
 
 	#
 	# Instead of using the list as provided by the algorithms,
@@ -569,6 +571,45 @@ sub oddeventransposition {
 
 	return @network;
 }
+
+#
+# @network = balanced($inputs);
+#
+# "The Balanced Sorting Network" by M. Dowd, Y. Perl, M Saks, and L. Rudolph
+# ftp://ftp.cs.rutgers.edu/cs/pub/technical-reports/pdfs/DCS-TR-127.pdf
+#
+sub balanced {
+	my $inputs = shift;
+	my @network;
+
+	#
+	# $t = ceiling(log2($inputs - 1)); but we'll
+	# find it using the length of the bitstring.
+	#
+	my $t = unpack("B32", pack("N", $inputs - 1));
+	$t =~ s/^0+//;
+	$t = length $t;
+
+	for (1 .. $t)
+	{
+		for (my $curr = 2**($t); $curr > 1; $curr /= 2)
+		{
+			for (my $i = 0; $i < 2**$t; $i += $curr)
+			{
+				for (my $j = 0; $j < $curr/2; $j++)
+				{
+					my $wire1 = $i+$j;
+					my $wire2 = $i+$curr-$j-1;
+					push @network, [$wire1, $wire2]
+						if $wire1 < $inputs && $wire2 < $inputs;
+				}
+			}
+		}
+	}
+
+	return @network;
+}
+
 
 #
 # $array_ref = nw_sort(\@network, \@array);
@@ -1299,6 +1340,14 @@ useful for illustrative purposes.
 Use a naive odd-even transposition sort. This is a primitive sort closely
 related to bubble sort except it is more parallel. Because other algorithms
 are more efficient, this sort is included mostly for illustrative purposes.
+
+=item balanced
+
+This network is described in the 1983 paper "The Balanced Sorting Network"
+by M. Dowd, Y. Perl, M Saks, and L. Rudolph. It is not a particularly
+efficient sort but it has some interesting properties due to the fact
+that it is constructed as a series of successive identical sub-blocks,
+somewhat like with oddeventransposition.
 
 =item 'best'
 
