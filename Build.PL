@@ -30,10 +30,21 @@ my $build = $class->new(
 
 	dist_abstract => 'Create Sorting Networks',
 	dist_author => ['John M. Gamble <jgamble@cpan.org>'],
-	dist_version => '1.30',  
+	dist_version => '2.00',
+
+	provides => {
+		'Algorithm::Networksort' => {
+			file => 'lib/Algorithm/Networksort.pm',
+		},
+		'Algorithm::Networksort::Best' => {
+			file => 'lib/Algorithm/Networksort/Best.pm',
+		},
+	},
 
 	requires => {
-		perl=> '5.8.3'
+		perl=> '5.10.1',
+		Moo => '2.000000',
+		'namespace::autoclean' => '0.16',
 	},
 
 	configure_requires => {
