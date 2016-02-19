@@ -1,13 +1,12 @@
 package Algorithm::Networksort;
 
-use 5.008003;
+use 5.010001;
 
 use integer;
 use Carp;
 use Exporter;
 use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK);
-use strict;
-use warnings;
+use Moo;
 
 #
 # Three # for "I am here" messages, four # for variable dumps.
@@ -32,7 +31,38 @@ use warnings;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '1.30';
+our $VERSION = '2.00';
+
+has algorithm => (
+	is => 'rw',
+	isa => sub {my $a = $_[0]; die "Unknown algorithm '$a'" unless (exists $algname{$a});},
+);
+
+has inputs => (
+	is => 'rw',
+	isa => sub {my %n = $_[0]; die "Bad input number $n" unless ($n > 1);},
+);
+
+has comparators => (
+	is => 'rw',
+	lazy => 1,
+	builder => sub {return nw_comparators($self->inputs, algorithm => $self->algorithm);},
+);
+
+has creator => (
+	is => 'ro',
+	default => "Creator: perl module " . __PACKAGE__ .  " version $VERSION.\n",
+);
+
+has title => (
+	is => 'rw',
+	builder => sub {return $self->algorithm . " for N = " . $self->inputs;},
+);
+
+has format => (
+	is => 'rw',
+	default => "[%d, %d]",
+);
 
 #
 # Names for the algorithm keys.
@@ -66,7 +96,7 @@ my %graphset = (
 # Color parameters.
 #
 my %colorset = (
-	foreground => undef,
+	foreground => 'black',
 	inputbegin => undef,
 	inputline => undef,
 	inputend => undef,
@@ -97,6 +127,11 @@ my %textset = (
 #
 my $swaps = 0;
 
+sub BUILDARGS
+{
+	my($class, $args) = @_;
+
+}
 
 #
 # @algkeys = nw_algorithms();
@@ -857,6 +892,7 @@ sub nw_color
 	{
 		$colorset{$key} = $color_opts{$key} if (exists $color_opts{$key});
 	}
+	$colorset{foreground} //= 'black';	# Ensure foreground is set.
 	return %colorset;
 }
 
