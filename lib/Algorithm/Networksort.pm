@@ -7,12 +7,14 @@ use Carp;
 use Exporter;
 use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK);
 use Moo;
+use Moox::late;
+use Moox::HandlesVia;
 
 #
 # Three # for "I am here" messages, four # for variable dumps.
 # Five # for nw_sort tracking.
 #
-#use Smart::Comments q(####);
+#use Smart::Comments ('###', '####');
 
 @ISA = qw(Exporter);
 
@@ -33,37 +35,6 @@ use Moo;
 
 our $VERSION = '2.00';
 
-has algorithm => (
-	is => 'rw',
-	isa => sub {my $a = $_[0]; die "Unknown algorithm '$a'" unless (exists $algname{$a});},
-);
-
-has inputs => (
-	is => 'rw',
-	isa => sub {my %n = $_[0]; die "Bad input number $n" unless ($n > 1);},
-);
-
-has comparators => (
-	is => 'rw',
-	lazy => 1,
-	builder => sub {return nw_comparators($self->inputs, algorithm => $self->algorithm);},
-);
-
-has creator => (
-	is => 'ro',
-	default => "Creator: perl module " . __PACKAGE__ .  " version $VERSION.\n",
-);
-
-has title => (
-	is => 'rw',
-	builder => sub {return $self->algorithm . " for N = " . $self->inputs;},
-);
-
-has format => (
-	is => 'rw',
-	default => "[%d, %d]",
-);
-
 #
 # Names for the algorithm keys.
 #
@@ -77,6 +48,11 @@ my %algname = (
 	balanced => "Balanced",
 	oddevenmerge => "Batcher's Odd-Even Merge Sort",
 );
+
+#
+# Valid group types.
+#
+my $groupings = qr(group|parallel|none);
 
 #
 # Parameters for SVG and EPS graphing.
@@ -122,6 +98,48 @@ my %textset = (
 	gapend => "  \n",
 );
 
+has algorithm => (
+	is => 'rw',
+	isa => sub {my $a = $_[0]; die "Unknown algorithm '$a'" unless (exists $algname{$a});},
+);
+
+has inputs => (
+	is => 'rw',
+	isa => sub {my $n = $_[0]; die "Bad input number $n" unless ($n > 1);},
+);
+
+has grouping => (
+	is => 'rw',
+	default => "none",
+	isa => sub {my $g = $_[0]; die "Unknown grouping '$g'" unless ($g =~ $groupings);},
+);
+
+has comparators => (
+	is => 'rw',
+	lazy => 1,
+	handles_via => 'Array',
+	builder => sub {my $self = shift; return nw_comparators($self->inputs, algorithm => $self->algorithm);},
+);
+
+has creator => (
+	is => 'ro',
+	default => "Creator: perl module " . __PACKAGE__ .  " version $VERSION.\n",
+);
+
+has title => (
+	is => 'rw',
+	builder => sub {my $self = shift; return $self->algorithm . " for N = " . $self->inputs;},
+);
+
+has format => (
+	is => 'rw',
+	default => "[%d, %d]",
+);
+
+has colorset => (
+	is => 'rw',
+);
+
 #
 # Variables to track sorting statistics
 #
@@ -129,8 +147,9 @@ my $swaps = 0;
 
 sub BUILDARGS
 {
-	my($class, $args) = @_;
+	my($class, @args) = @_;
 
+	return { @args };
 }
 
 #
