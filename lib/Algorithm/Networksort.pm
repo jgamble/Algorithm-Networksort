@@ -6,13 +6,14 @@ use integer;
 use Carp;
 use Exporter;
 use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK);
-use Moo;
-use Moox::late;
-use Moox::HandlesVia;
+use Moose;
+use namespace::autoclean;
+
+use Carp qw(croak);
 
 #
 # Three # for "I am here" messages, four # for variable dumps.
-# Five # for nw_sort tracking.
+# Five # for sort tracking.
 #
 #use Smart::Comments ('###', '####');
 
@@ -20,14 +21,7 @@ use Moox::HandlesVia;
 
 %EXPORT_TAGS = (
 	'all' => [ qw(
-		nw_algorithms
-		nw_algorithm_name
-		nw_color
-		nw_graph
-		nw_group
-		nw_comparators
 		nw_format
-		nw_sort
 	) ],
 );
 
@@ -55,7 +49,7 @@ my %algname = (
 my $groupings = qr(group|parallel|none);
 
 #
-# Parameters for SVG and EPS graphing.
+# Default parameters for SVG, EPS, and text graphing.
 #
 my %graphset = (
 	hz_sep => 12,
@@ -64,28 +58,6 @@ my %graphset = (
 	vt_margin => 21,
 	indent => 9,
 	stroke_width => 2,
-	title => undef,
-	namespace => undef,
-);
-
-#
-# Color parameters.
-#
-my %colorset = (
-	foreground => 'black',
-	inputbegin => undef,
-	inputline => undef,
-	inputend => undef,
-	compline=> undef,
-	compbegin => undef,
-	compend => undef,
-	background => undef,
-);
-
-#
-# Parameters for text 'graphing'.
-#
-my %textset = (
 	inputbegin => "o-",
 	inputline => "---",
 	inputcompline => "-|-",
@@ -98,45 +70,68 @@ my %textset = (
 	gapend => "  \n",
 );
 
+#
+# Default graphing color parameters.
+#
+my %colorset = (
+	foreground => undef,
+	inputbegin => undef,
+	inputline => undef,
+	inputend => undef,
+	compline=> undef,
+	compbegin => undef,
+	compend => undef,
+	background => undef,
+);
+
 has algorithm => (
-	is => 'rw',
-	isa => sub {my $a = $_[0]; die "Unknown algorithm '$a'" unless (exists $algname{$a});},
+	isa => 'Str', is => 'ro',
+	default => 'bosenelson',
+);
+
+has algorithm_name => (
+	isa => 'Str', is => 'ro', lazy => 1,
+	builder => sub {my $self = shift; return $algname{$self->algorithm};},
 );
 
 has inputs => (
-	is => 'rw',
-	isa => sub {my $n = $_[0]; die "Bad input number $n" unless ($n > 1);},
+	isa => 'Int', is => 'ro', required => 1,
 );
 
 has grouping => (
-	is => 'rw',
+	isa => 'Str', is => 'rw', required => 0,
 	default => "none",
-	isa => sub {my $g = $_[0]; die "Unknown grouping '$g'" unless ($g =~ $groupings);},
 );
 
 has comparators => (
-	is => 'rw',
+	isa => 'ArrayRef[ArrayRef[Int]]', is => 'ro', required => 0,
+	init_arg => undef,
 	lazy => 1,
-	handles_via => 'Array',
-	builder => sub {my $self = shift; return nw_comparators($self->inputs, algorithm => $self->algorithm);},
+	builder => 'nw_comparators',
 );
 
 has creator => (
-	is => 'ro',
-	default => "Creator: perl module " . __PACKAGE__ .  " version $VERSION.\n",
+	isa => 'Str', is => 'ro', required => 0,
+	default => "Perl module " . __PACKAGE__ .  ", version $VERSION.\n",
 );
 
 has title => (
 	is => 'rw',
-	builder => sub {my $self = shift; return $self->algorithm . " for N = " . $self->inputs;},
+	default => sub {my $self = shift; return $self->algorithm_name() . " for N = " . $self->inputs;},
 );
 
 has format => (
+	isa => 'ArrayRef[Str]',
 	is => 'rw',
-	default => "[%d, %d]",
 );
 
-has colorset => (
+has colorsettings => (
+	isa => 'HashRef',
+	is => 'rw',
+);
+
+has graphsettings => (
+	isa => 'HashRef',
 	is => 'rw',
 );
 
@@ -145,34 +140,33 @@ has colorset => (
 #
 my $swaps = 0;
 
-sub BUILDARGS
+sub BUILD
 {
-	my($class, @args) = @_;
+	my $self = shift;
+	my $alg = $self->algorithm();
+	my $grp = $self->grouping();
 
-	return { @args };
+	#
+	# Catch errors
+	#
+	croak "Input size must be 2 or greater" if ($inputs < 2);
+
+	croak "Unknown algorithm '$alg'" unless (exists $algname{$alg});
+	croak "Unknown grouping '$grp'" unless ($grp =~ $groupings);
+
+	return $self;
 }
 
 #
-# @algkeys = nw_algorithms();
+# @algkeys = algorithms();
 #
 # Return a list algorithm choices. Each one is a valid key
-# for the nw_comparators() algorithm key.
+# for the algorithm argument of new().
 #
-sub nw_algorithms
+sub algorithms
 {
+	my $class = shift;
 	return keys %algname;
-}
-
-#
-# nw_algorithm_name();
-#
-# Return the text-worthy name of the algorithm, given its key name.
-#
-sub nw_algorithm_name
-{
-	my $alg = shift;
-	return $algname{$alg} if (defined $alg);
-	return undef;
 }
 
 #
@@ -183,46 +177,27 @@ sub nw_algorithm_name
 #
 sub nw_comparators
 {
-	my $inputs = shift;
-	my %opts = @_;
+	my $self = shift;
 	my @comparators;
 
-	#
-	### Generating the comparators...
-	#
-	#### $inputs
-	#### %opts
-	#
-	return () if ($inputs < 2);
-	return ([0, 1]) if ($inputs == 2);
-
-	$opts{algorithm} = 'bosenelson' unless (defined $opts{algorithm});
-	$opts{grouping} = 'none' unless (defined $opts{grouping});
-
-	unless (exists $algname{$opts{algorithm}})
-	{
-		carp "Unknown algorithm '", $opts{algorithm}, "'\n";
-		return ();
-	}
-
-	@comparators = bosenelson($inputs) if ($opts{algorithm} eq 'bosenelson');
-	@comparators = hibbard($inputs) if ($opts{algorithm} eq 'hibbard');
-	@comparators = batcher($inputs) if ($opts{algorithm} eq 'batcher');
-	@comparators = bitonic($inputs) if ($opts{algorithm} eq 'bitonic');
-	@comparators = bubble($inputs) if ($opts{algorithm} eq 'bubble');
-	@comparators = oddeventransposition($inputs) if ($opts{algorithm} eq 'oddeventransposition');
-	@comparators = balanced($inputs) if ($opts{algorithm} eq 'balanced');
-	@comparators = oddevenmerge($inputs) if ($opts{algorithm} eq 'oddevenmerge');
+	@comparators = bosenelson($self->$inputs) if ($self->algorithm() eq 'bosenelson');
+	@comparators = hibbard($self->$inputs) if ($self->algorithm() eq 'hibbard');
+	@comparators = batcher($self->$inputs) if ($self->algorithm() eq 'batcher');
+	@comparators = bitonic($self->$inputs) if ($self->algorithm() eq 'bitonic');
+	@comparators = bubble($self->$inputs) if ($self->algorithm() eq 'bubble');
+	@comparators = oddeventransposition($self->$inputs) if ($self->algorithm() eq 'oddeventransposition');
+	@comparators = balanced($self->$inputs) if ($self->algorithm() eq 'balanced');
+	@comparators = oddevenmerge($self->$inputs) if ($self->algorithm() eq 'oddevenmerge');
 
 	#
 	# Instead of using the list as provided by the algorithms,
 	# re-order it using the grouping for the graphs. This makes
 	# use of parallelism (and less stalling when used in a pipeline).
 	#
-	if ($opts{grouping} eq 'group' or $opts{grouping} eq 'parallel')
+	if ($self->grouping ne 'none')
 	{
 		my @grouped_comparators = nw_group(\@comparators, $inputs,
-				grouping => $opts{grouping});
+				grouping => $self->grouping);
 		@comparators = ();
 		foreach my $group (@grouped_comparators)
 		{
@@ -230,7 +205,7 @@ sub nw_comparators
 		}
 	}
 
-	return @comparators;
+	return \@comparators;
 }
 
 #
@@ -735,21 +710,25 @@ sub oddevenmerge {
 }
 
 #
-# $array_ref = nw_sort(\@network, \@array);
+# $array_ref = $nw->sort(\@array);
 #
 # Use the network of comparators (in @network) to sort the elements
 # in @array.  Returns the reference to the array, which is sorted
 # in-place.
 #
-# This function is for testing purposes only, interpreting sorting
-# pairs ad hoc in an interpreted language is going to be very slow.
+# This function is for testing and statistical purposes only, as
+# interpreting sorting pairs ad hoc in an interpreted language is
+# going to be very slow.
 #
-sub nw_sort
+sub sort
 {
-	my($network, $array) = @_;
+	my $self = shift;
+	my($array) = @_;
+
+	my $network = $self->comparators();
 
 	#
-	### nw_sort():
+	### sort():
 	#### $network
 	#### $array
 	#
@@ -778,11 +757,11 @@ sub nw_sort
 }
 
 #
-# %sortstats = nw_sort_stats();
+# %sortstats = statistics();
 #
 # Return information on the sorting network.
 #
-sub nw_sort_stats
+sub statistics
 {
 	return (swaps => $swaps,
 		);
@@ -836,7 +815,7 @@ sub nw_format
 #
 # Take a list of comparators, and transform it into a list of a list of
 # comparators, each sub-list representing a group that can be printed
-# in a single column.  This makes it easier for the nw_graph routines to
+# in a single column.  This makes it easier for the graph routines to
 # render a visual representation of the sorting network.
 #
 sub nw_group
@@ -898,58 +877,6 @@ sub nw_group
 }
 
 #
-# %colors = nw_color(%coloroptions);
-#
-# Sets the colors for the graphical format of the sorting network.
-# Returns a hash of the resulting set.
-#
-sub nw_color
-{
-	my %color_opts = @_;
-
-	foreach my $key (keys %color_opts)
-	{
-		$colorset{$key} = $color_opts{$key} if (exists $color_opts{$key});
-	}
-	$colorset{foreground} //= 'black';	# Ensure foreground is set.
-	return %colorset;
-}
-
-#
-# %svg_colorset = svg_color();
-#
-# Return the full list of colors used to make the SVG output.
-#
-# The default color for drawing is the foreground color.  Use
-# it to fill in any unspecified colors in our local colorset.
-#
-sub svg_color
-{
-	my $dclr = (defined $colorset{foreground})? $colorset{foreground}: 'black';
-	return map{$_ => (defined $colorset{$_})?
-	    $colorset{$_}:
-	    $dclr} keys %colorset;
-}
-
-sub text_segments
-{
-	my %print_opts = @_;
-
-	return map{$_ => (defined $print_opts{$_})?
-	    $print_opts{$_}:
-	    $textset{$_}} keys %textset;
-}
-
-sub graph_segments
-{
-	my %print_opts = @_;
-
-	return map{$_ => (defined $print_opts{$_})?
-	    $print_opts{$_}:
-	    $graphset{$_}} keys %graphset;
-}
-
-#
 # Set up the horizontal coordinates.
 #
 sub hz_coords
@@ -984,45 +911,16 @@ sub vt_coords
 }
 
 #
-# $string = nw_graph(\@network, $inputs, %options);
+# $string = $nw->graph_eps();
 #
-# Returns a string that contains the sorting network in a graphical format.
+# Returns a string that graphs the sorting network in encapsulated postscript.
 #
-sub nw_graph
+sub graph_eps
 {
-	my($network, $inputs, %print_opts) = @_;
-
-	if (scalar @$network == 0)
-	{
-		carp "No network to graph.\n";
-		return "";
-	}
-
-	#
-	# Text graph by default.
-	#
-	return nw_text_graph($network, $inputs, text_segments(%print_opts))
-	    if (!exists $print_opts{graph} or $print_opts{graph} eq "text");
-
-
-	return nw_svg_graph($network, $inputs, graph_segments(%print_opts))
-	    if ($print_opts{graph} eq "svg");
-
-	return nw_eps_graph($network, $inputs, graph_segments(%print_opts))
-	    if ($print_opts{graph} eq "eps");
-
-	carp "Unknown 'graph' type '" . $print_opts{graph} . "'.\n";
-	return "";
-}
-
-#
-# $string = nw_eps_graph(\@network, $inputs, %graphing_options);
-#
-# Returns a string that contains the sorting network in an EPS format.
-#
-sub nw_eps_graph
-{
-	my($network, $inputs, %grset) = @_;
+	my $self = shift;
+	my $network = $self->comparators();
+	my $inputs = $self->inputs();
+	my %grset = $self->graph_settings();
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
@@ -1035,7 +933,6 @@ sub nw_eps_graph
 
 	my $xbound = $hcoord[$columns - 1] + $grset{hz_margin} + $grset{indent};
 	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
-	my $title = $grset{title} || "N = $inputs Sorting Network.";
 
 	#
 	# A long involved piece to create the necessary DSC, the subroutine
@@ -1045,8 +942,9 @@ sub nw_eps_graph
 	my $string =
 		qq(%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 $xbound $ybound\n%%CreationDate: ) .
 		localtime() .
-		qq(\n%%Creator: perl module ) . __PACKAGE__ . qq( version $VERSION.) .
-		qq(\n%%Title: $title\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n) .
+		qq(\n%%Creator: ) . $self->creator() .
+		qq(\n%%Title: ) . $self->title() .
+		qq(\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n) .
 q(
 % column inputline1 inputline2 draw-comparatorline
 /draw-comparatorline {
@@ -1102,14 +1000,21 @@ q(
 }
 
 #
-# $string = nw_svg_graph(\@network, $inputs, %graphing_options);
+# $string = graph_svg();
+# $string = graph_svg($namespace);
 #
 # Return a graph of the sorting network in Scalable Vector Graphics.
 # Measurements are in pixels. 0,0 is the upper left corner.
 #
-sub nw_svg_graph
+sub graph_svg
 {
-	my($network, $inputs, %grset) = @_;
+	my $self = shift;
+	my $network = $self->comparators();
+	my $inputs = $self->inputs();
+	my %grset = $self->graph_settings();
+
+	my $ns = $_[0] // "";
+	$ns .= ":" if ($ns);
 
 	my @node_stack = nw_group($network, $inputs);
 	my $columns = scalar @node_stack;
@@ -1118,8 +1023,7 @@ sub nw_svg_graph
 	# Get the colorset, using the foreground color as the default color
 	# for drawing.
 	#
-	my %clrset = svg_color();
-	my $ns =  (defined $grset{namespace})? $grset{namespace} . ":" : "";
+	my %clrset = map{$_ => ($colorset{$_} // $colorset{foreground} // 'black')} keys %colorset;
 
 	#
 	# Set up the vertical and horizontal coordinates.
@@ -1131,15 +1035,13 @@ sub nw_svg_graph
 	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
 
 	my $right_margin = $hcoord[$columns - 1] + $grset{indent};
-	my $title = $grset{title} || "N = $inputs Sorting Network.";
 
 	my $string = qq(<svg xmlns="http://www.w3.org/2000/svg" ) .
 		qq(xmlns:xlink="http://www.w3.org/1999/xlink" ) .
 		qq(width="$xbound" height="$ybound" viewbox="0 0 $xbound $ybound">\n) .
 		qq(  <${ns}desc>\n    CreationDate: ) . localtime() .
-		qq(\n    Creator: perl module ) . __PACKAGE__ .
-		qq( version $VERSION.\n  </${ns}desc>\n) .
-		qq(  <${ns}title>$title</${ns}title>\n);
+		qq(\n    Creator: ) . $self->creator() .  qq(\n  </${ns}desc>\n) .
+		qq(  <${ns}title>) . $self->title() . qq(</${ns}title>\n);
 
 	#
 	# Set up the input line template.
@@ -1222,13 +1124,16 @@ sub nw_svg_graph
 }
 
 #
-# $string = nw_text_graph(\@network, $inputs, %graphing_options);
+# $string = graph_text();
 #
 # Return a graph of the sorting network in text.
 #
-sub nw_text_graph
+sub graph_text
 {
-	my($network, $inputs, %txset) = @_;
+	my $self = shift;
+	my $network = $self->comparators();
+	my $inputs = $self->inputs();
+	my %txset = $self->graph_settings();
 
 	my @node_stack = nw_group($network, $inputs);
 	my @inuse_nodes;
@@ -1350,20 +1255,21 @@ Algorithm::Networksort - Create Sorting Networks.
 
 =head1 SYNOPSIS
 
-  use Algorithm::Networksort qw(:all);
+  use Algorithm::Networksort;
 
   my $inputs = 4;
 
   #
   # Generate the sorting network (a list of comparators).
   #
-  my @network = nw_comparators($inputs);
+  my $nw = Algorithm::Networksort->new(inputs =>$inputs);
 
   #
-  # Print the list, and print the graph of the list.
+  # Print the comparator list using the default format,
+  # and print a graph of the list.
   #
-  print nw_format(\@network), "\n";
-  print nw_graph(\@network, $inputs), "\n";
+  print $nw;
+  print $nw->graph_text(), "\n";
 
 =head1 DESCRIPTION
 
@@ -1382,37 +1288,31 @@ functions, or templates) that one may insert into source code. It may
 also be used to create images of the sorting networks in either encapsulated
 postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
-=head2 Export
+=head2 Methods
 
-None by default. There is only one available export tag, ':all', which
-exports the functions to create and use sorting networks. The functions are
-nw_algorithms(), nw_algorithm_name(), nw_comparators(), nw_format(), nw_graph(),
-nw_color(), nw_group(), and nw_sort().
-
-=head2 Functions
-
-=head3 nw_algorithms()
+=head3 algorithms()
 
 Return a list algorithm choices. Each one is a valid value for the
-L<nw_comparators()> algorithm key.
+algorithm key argument of new().
 
-=head3 nw_algorithm_name()
+=head3 algorithm_name()
 
 Return the full text name of the algorithm, given its key name.
 
-=head3 nw_comparators()
+=head3 new()
 
-    @network = nw_comparators($inputs);
+    $nw = Algorithm::Networksort->new(inputs => $inputs);
 
-    @network1 = nw_comparators($inputs, algorithm => $alg);
+    $nw1 = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
 
-    @network2 = nw_comparators($inputs, algorithm => $alg, grouping => $grouptype);
+    $nw2 = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg, grouping => $grouptype);
 
-Returns a list of comparators that can sort B<$inputs>
-items. The algorithm for generating the list may be chosen, but by default the
-sorting network is generated by the Bose-Nelson algorithm. The different methods will
-produce different networks in general, although in some cases the differences
-will be in the arrangement of the comparators, not in their number.
+Returns an object that contains, amongh other things, a list of comparators that
+can sort B<$inputs> items. The algorithm for generating the list may be chosen,
+but by default the sorting network is generated by the Bose-Nelson algorithm.
+The different methods will produce different networks in general, although in
+some cases the differences will be in the arrangement of the comparators, not
+in their number.
 
 Regardless of the algorithm you use, the order the comparators are returned in will
 generally not be in the best order possible to prevent stalling in a CPU's pipeline.
@@ -1545,7 +1445,7 @@ B<Example 5: you want the default format to use letters, not numbers.>
     substr($string, -1, 1) = ']';    # Overwrite the trailing comma.
     print $string;
 
-=head3 nw_color()
+=head3 colorsettings()
 
 Sets the colors of the svg graph parts (eps support will come later).
 The parts are named.
@@ -1591,7 +1491,32 @@ default 'foreground' color.  The foreground color itself has a default
 value of 'black'.  The one exception is the 'background' color, which
 has no default color at all.
 
-=head3 nw_graph()
+=head3 graph_eps()
+
+Returns a string that graphs out the network's comparators. The format
+will be in encapsulated postscript.
+
+    my $nw = Algorithm::Networksort(inputs = 4, algorithm => 'bitonic');
+
+    print $nw->graph_eps();
+
+=head3 graph_svg()
+
+Returns a string that graphs out the network's comparators.
+Has an optional namespace argument, a tag prefix that allows programs to
+distinguish between different XML
+vocabularies that have the same tag. If undefined, no tag prefix is used.
+
+The output will be between E<lt>svgE<gt> and E<lt>/svgE<gt> tags:
+
+    my $nw = Algorithm::Networksort(inputs = 4, algorithm => 'bitonic');
+
+    print qq(<?xml version="1.0" standalone="no"?>\n),
+          qq(<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ),
+          qq("http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n),
+	  $nw->graph_svg();
+
+=head3 graph_text()
 
 Returns a string that graphs out the network's comparators. The format
 may be encapsulated postscript (graph=>'eps'), scalar vector graphics
@@ -1600,30 +1525,14 @@ and 'eps' options produce output that is self-contained. The 'svg' option
 produces output between E<lt>svgE<gt> and E<lt>/svgE<gt> tags, which needs
 to be combined with XML markup in order to be viewed.
 
-    my $inputs = 4;
-    my @network = nw_comparators($inputs);
 
-    print qq(<?xml version="1.0" standalone="no"?>\n),
-          qq(<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ),
-          qq("http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n),
-	  nw_graph(\@network, $inputs, graph => 'svg');
+    my $nw = Algorithm::Networksort(inputs = 4, algorithm => 'bitonic');
 
-The 'graph' option is not the only one available. The graphing can be
-adjusted to your needs using the following options.
+    print $nw->graph_text();
 
-=head4 Options for 'svg' only.
+=head3 graphsettings()
 
-=over 3
-
-=item namespace
-
-I<Default value: undef.>
-A tag prefix that allows programs to distinguish between different XML
-vocabularies that have the same tag. If undefined, no tag prefix is used.
-
-=back
-
-=head4 Options for 'svg' and 'eps' graphs
+=head4 Options for graph_svg() and graph_eps():
 
 =over 3
 
@@ -1651,11 +1560,6 @@ I<Default value: 2.>
 Width of the lines used to define comparators and input lines. Also
 represents the radii of the endpoint circles.
 
-=item title
-
-I<Default value: "N = $inputs Sorting Network.">
-Title of the graph. It should be a short one-line description.
-
 =item vt_margin
 
 I<Default value: 21.>
@@ -1668,7 +1572,7 @@ The spacing separating the vertical lines (the comparators).
 
 =back
 
-=head4 Options for the 'text' graph
+=head4 Options for graph_text():
 
 =over 3
 
@@ -1729,7 +1633,7 @@ The characters that end the gap between the input lines.
 
 =head3 nw_group()
 
-This is a function called by nw_graph() and optionally by nw_comparators(). The
+This is a function called by the graphing methods. The
 function takes the comparator list and returns a list of comparator lists, each
 sub-list representing a group of comparators that can be printed in a single
 column. There is one option available, 'grouping', that will produce a grouping
@@ -1756,8 +1660,8 @@ Arrange the sequence in parallel so that it has a minimum depth.
 The chances that you will need to use this function are slim, but the
 following code snippet may represent an example:
 
-    my $inputs = 8;
-    my @network = nw_comparators($inputs, algorithm => 'batcher');
+    my $nw = Algorithm::Networksort->new(inputs => 8, algorithm => 'batcher');
+    my @network = $nw->comparators();
     my @grouped_network = nw_group(\@network, $inputs, grouping=>'parallel');
 
     print "There are ", scalar @network,
@@ -1786,7 +1690,7 @@ This will produce:
 
     This will be graphed in 11 columns.
 
-=head3 nw_sort()
+=head3 sort()
 
 Sort an array using the network. This is meant for testing purposes
 only - looping around an array of comparators in order to sort an
@@ -1796,38 +1700,36 @@ for using a sorting network.
 This function uses the C<< <=> >> operator for comparisons.
 
     my @digits = (1, 8, 3, 0, 4, 7, 2, 5, 9, 6);
-    my @network = nw_comparators(scalar @digits, algorithm => 'batcher');
-    nw_sort(\@network, \@digits);
+    my $nw = Algorithm::Networksort->new(inputs => (scalar @digits), algorithm => 'batcher');
+    $nw->sort(@digits);
     print join(", ", @digits);
 
-=head3 nw_sort_stats()
+=head3 statistics()
 
-Return statistics on the last nw_sort() call. Currently only "swaps",
+Return statistics on the last sort() call. Currently only "swaps",
 a count of the number of exchanges, is returned.
 
     my(@d, %nw_stats);
     my @digits = (1, 8, 3, 0, 4, 7, 2, 5, 9, 6);
-    my @network_batcher = nw_comparators(scalar @digits,
-            algorithm => 'batcher');
-    my @network_bn = nw_comparators(scalar @digits,
-            algorithm => 'bosenelson');
+    my $nw_batcher = Algorithm::Networksort->new(inputs => (scalar @digits), algorithm => 'batcher');
+    my $nw_bn = Algorithm::Networksort->new(inputs => (scalar @digits), algorithm => 'bosenelson');
 
     @d = @digits;
-    nw_sort(\@network_batcher, \@d);
-    %nw_stats = nw_sort_stats();
+    $nw_batcher->sort(\@d);
+    %nw_stats = $nw_batcher->statistics();
     print "The Batcher Merge-Exchange network took ",
         $nw_stats{swaps}, " exchanges to sort the array."
 
     @d = @digits;
-    nw_sort(\@network_bn, \@d);
-    %nw_stats = nw_sort_stats();
+    $nw_bn->sort(\@d);
+    %nw_stats = $nw_bn->statistics();
     print "The Bose-Nelson network took ",
         $nw_stats{swaps}, " exchanges to sort the array."
 
 =head1 ACKNOWLEDGMENTS
 
 L<Doug Hoyte|https://github.com/hoytech> provided the code for the bitonic sort algorithm and the bubble sort,
-and the idea for what became the L<nw_sort_stats()> function.
+and the idea for what became the L<statistics()> method.
 
 =head1 SEE ALSO
 
