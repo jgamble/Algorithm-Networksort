@@ -1,5 +1,5 @@
 use Getopt::Long;
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 
 use strict;
 use warnings;
@@ -25,14 +25,22 @@ GetOptions(
 
 my $inputs = $ARGV[0] || 8;
 
-my @network = nw_comparators($inputs, algorithm => $alg);
+my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
 
 #
-# Because it's a pain to do it on the command line, fix the endline.
+# Ensure we're only passing in set parameters. And, if it's defined
+# (and because it's a pain to do it on the command line), fix the endline.
 #
-$txtset{inputend} .= "\n" if (defined $txtset{inputend});
+my %def_txtset;
+for (keys %txtset)
+{
+	$def_txtset{$_} = $txtset{$_} if (defined $txtset{$_})
+}
 
-print nw_graph(\@network, $inputs, graph => 'text', %txtset),
-    "\tN= $inputs ", nw_algorithm_name($alg), " Sorting Network\n";
+$def_txtset{inputend} .= "\n" if (defined $txtset{inputend});
+
+$nw->graphsettings(%def_txtset);
+
+print $nw->graph_text() . "\t" . $nw->title() . "\n";
 
 exit(0);

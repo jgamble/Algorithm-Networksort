@@ -1,9 +1,9 @@
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 
 my $inputs = $ARGV[0] || 8;
 my $alg = $ARGV[1] || 'hibbard';
 
-my @network = nw_comparators($inputs, algorithm => $alg);
+my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
 my @grouped_network = nw_group(\@network, $inputs, grouping=>'parallel');
 
 print "There are ", scalar @network,

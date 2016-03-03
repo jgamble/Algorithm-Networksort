@@ -1,5 +1,5 @@
 use Getopt::Long;
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ GetOptions('compbegin=s' => \$colorset{compbegin},
 	'algorithm=s' => \$alg,
 );
 
-%colorset = nw_color(%colorset);
-
 my $inputs = $ARGV[0] || 8;
 
-my @network = nw_comparators($inputs, algorithm => $alg);
+my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
+
+$nw->colorsettings(%colorset);
 
 print qq(<?xml version="1.0" standalone="no"?>\n),
 qq(<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ),
@@ -41,6 +41,6 @@ foreach my $k (keys %colorset)
 	print "$k => $v\n";
 }
 print " -->\n";
-print nw_graph(\@network, $inputs, graph => 'svg');
+print $nw->graph_svg();
 
 exit(0);

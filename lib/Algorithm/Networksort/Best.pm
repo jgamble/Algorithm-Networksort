@@ -1,8 +1,8 @@
 package Algorithm::Networksort::Best;
 
-use 5.008003;
+use 5.010001;
 
-use Algorithm::Networksort qw(nw_group);
+use Algorithm::Networksort;
 use Carp;
 use Exporter;
 use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK);
@@ -13,6 +13,7 @@ use warnings;
 
 %EXPORT_TAGS = (
 	'all' => [ qw(
+		nwsrt_best
 		nw_best_comparators
 		nw_best_inputs_range
 		nw_best_inputs
@@ -418,6 +419,29 @@ INIT
 }
 
 #
+# $nw = nwsrtbest(name => $name);
+#
+sub nwsrt_best
+{
+	my(%opts) = @_;
+
+	croak "No network chosen" unless (exists $opts{name});
+	my $name = $opts{name};
+
+	croak "Unknown network name '$name'" unless (exists $nw_best_by_name{$name});
+	my %nw_struct = $nw_best_by_name{$name};
+	my $title = $opts{title} // $nw_struct{title};
+
+	return Algorithm::Networksort->new(
+		algorithm => 'none',
+		inputs => $nw_struct{inputs},
+		comparators => $nw_struct{comparators},
+		depth => $nw_struct{depth},
+		title => $title,
+	);
+}
+
+#
 # Return a list of the available inputs.
 #
 sub nw_best_inputs_range
@@ -499,23 +523,6 @@ sub nw_best_comparators
 
 	@comparators = @{$nw_best_by_name{$key}{comparators}};
 	$inputs = ${$nw_best_by_name{$key}}{inputs};
-
-	#
-	# Instead of using the list as provided by the algorithms,
-	# re-order it using the grouping for the graphs. This makes
-	# use of parallelism (and less stalling when used in a pipeline).
-	#
-	if (exists $opts{grouping} and
-		($opts{grouping} eq 'group' or $opts{grouping} eq 'parallel'))
-	{
-		my @grouped_comparators = nw_group(\@comparators, $inputs,
-				grouping => $opts{grouping});
-		@comparators = ();
-		foreach my $group (@grouped_comparators)
-		{
-			push @comparators, @$group;
-		}
-	}
 
 	return @comparators;
 }

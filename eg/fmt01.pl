@@ -1,15 +1,13 @@
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 use strict;
 use warnings;
 
 my $inputs = $ARGV[0] || 8;
 my $alg = $ARGV[1] || 'hibbard';
 
-my @network = nw_comparators($inputs, algorithm => $alg);
+my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
 
-print nw_format(\@network,
-		undef,
-		undef,
-		[1..$inputs]);
+$nw->index_base([1 .. $inputs]);
+print $nw->formatted();
 
 exit(0);

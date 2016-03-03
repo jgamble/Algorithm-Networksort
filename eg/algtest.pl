@@ -1,4 +1,4 @@
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 
 my $inputs = $ARGV[0] || 8;
 my $alg = $ARGV[1] || 'hibbard';

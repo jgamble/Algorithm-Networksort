@@ -1,6 +1,6 @@
 use strict;
 
-use Algorithm::Networksort qw(:all);
+use Algorithm::Networksort;
 use Test::More;
 require "t/zero_one.pl";
 
@@ -22,18 +22,17 @@ require "t/zero_one.pl";
 #
 our $author_testing = $ENV{AUTHOR_TESTING};
 our @input_range = $author_testing? (3..17): (3..10);
-our @algorithms = qw(balanced batcher bitonic bosenelson hibbard oddevenmerge);
+#our @algorithms = nw_algorithms();
+our @algorithms = qw(hibbard batcher);
 plan tests => (scalar @input_range  * scalar @algorithms);
 
 for my $algorithm (@algorithms)
 {
-	my $name = nw_algorithm_name($algorithm);
-
 	for my $inputs (@input_range)
 	{
-		my @network = nw_comparators($inputs, algorithm=>$algorithm);
-		my $status = zero_one($inputs, \@network);
-		is($status, "pass", "$name, N=$inputs, $status");
+		my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $algorithm);
+		my $status = zero_one($nw);
+		is($status, "pass", $nw->title() . ": $status");
 	}
 }
 

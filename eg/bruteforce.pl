@@ -1,4 +1,4 @@
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 
 my $inputs = $ARGV[0] || 5;
 my $n_comparators = $ARGV[1] || $inputs * 2;

@@ -2,32 +2,38 @@ package Algorithm::Networksort;
 
 use 5.010001;
 
-use integer;
-use Carp;
-use Exporter;
-use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK);
 use Moose;
+#use MooseX::AttributesShortcuts;
+#use Moose::Exporter;
 use namespace::autoclean;
 
-use Carp qw(croak);
+use Carp;
+use integer;
+#use Exporter;
 
 #
 # Three # for "I am here" messages, four # for variable dumps.
 # Five # for sort tracking.
 #
-#use Smart::Comments ('###', '####');
+#use Smart::Comments ('####');
 
-@ISA = qw(Exporter);
+#our @ISA = qw(Exporter);
+#our @EXPORT = ( qw(nwsrt
+#nw_algorithms 
+#) );
 
-%EXPORT_TAGS = (
-	'all' => [ qw(
-		nw_format
-	) ],
-);
-
-@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+#Moose::Exporter->setup_import_methods(
+	#as_is => ['nwsrt'],
+#);
 
 our $VERSION = '2.00';
+
+#
+# Our one use of overload, because default
+# printing is useful.
+#
+use overload
+	'""'	=> \&_stringify;
 
 #
 # Names for the algorithm keys.
@@ -44,11 +50,6 @@ my %algname = (
 );
 
 #
-# Valid group types.
-#
-my $groupings = qr(group|parallel|none);
-
-#
 # Default parameters for SVG, EPS, and text graphing.
 #
 my %graphset = (
@@ -57,6 +58,7 @@ my %graphset = (
 	vt_sep => 12,
 	vt_margin => 21,
 	indent => 9,
+	radius => 2,
 	stroke_width => 2,
 	inputbegin => "o-",
 	inputline => "---",
@@ -89,50 +91,41 @@ has algorithm => (
 	default => 'bosenelson',
 );
 
-has algorithm_name => (
-	isa => 'Str', is => 'ro', lazy => 1,
-	builder => sub {my $self = shift; return $algname{$self->algorithm};},
-);
-
 has inputs => (
 	isa => 'Int', is => 'ro', required => 1,
 );
 
-has grouping => (
-	isa => 'Str', is => 'rw', required => 0,
-	default => "none",
+has comparators => (
+	isa => 'ArrayRef[ArrayRef[Int]]', is => 'rw', required => 0,
+	predicate => 'has_comparators',
 );
 
-has comparators => (
-	isa => 'ArrayRef[ArrayRef[Int]]', is => 'ro', required => 0,
-	init_arg => undef,
-	lazy => 1,
-	builder => 'nw_comparators',
+has network => (
+	isa => 'ArrayRef[ArrayRef[Int]]', is => 'rw', required => 0,
+);
+
+has ['depth', 'length'] => (
+	isa => 'Int', is => 'rw', required => 0,
 );
 
 has creator => (
 	isa => 'Str', is => 'ro', required => 0,
-	default => "Perl module " . __PACKAGE__ .  ", version $VERSION.\n",
+	default => sub { return "Perl module " . __PACKAGE__ .  ", " .
+		"version $VERSION";}
 );
 
-has title => (
-	is => 'rw',
-	default => sub {my $self = shift; return $self->algorithm_name() . " for N = " . $self->inputs;},
+has formats => (
+	isa => 'ArrayRef[Str]', is => 'rw', required => 0,
+	init_arg => undef,
 );
 
-has format => (
-	isa => 'ArrayRef[Str]',
-	is => 'rw',
+has grouped_format => (
+	isa => 'Str', is => 'rw', required => 0,
+	default => "%s,\n",
 );
 
-has colorsettings => (
-	isa => 'HashRef',
-	is => 'rw',
-);
-
-has graphsettings => (
-	isa => 'HashRef',
-	is => 'rw',
+has index_base => (
+	isa => 'ArrayRef[Value]', is => 'rw', required => 0,
 );
 
 #
@@ -144,68 +137,147 @@ sub BUILD
 {
 	my $self = shift;
 	my $alg = $self->algorithm();
-	my $grp = $self->grouping();
+	my $inputs = $self->inputs();
+
+	my @network;
+	my @grouped;
 
 	#
 	# Catch errors
 	#
 	croak "Input size must be 2 or greater" if ($inputs < 2);
 
+	#
+	# Providing our own-grown network?
+	#
+	if ($alg eq 'none')
+	{
+		croak "No network provided" unless ($self->has_comparators);
+		$self->length(scalar @{ $self->comparators });
+		$self->network($self->comparators);
+
+		@grouped = $self->group();
+		$self->depth(scalar @grouped);
+		$self->network([map { @$_ } @grouped]);
+
+		return $self;
+	}
+
 	croak "Unknown algorithm '$alg'" unless (exists $algname{$alg});
-	croak "Unknown grouping '$grp'" unless ($grp =~ $groupings);
+
+	@network = bosenelson($inputs) if ($alg eq 'bosenelson');
+	@network = hibbard($inputs) if ($alg eq 'hibbard');
+	@network = batcher($inputs) if ($alg eq 'batcher');
+	@network = bitonic($inputs) if ($alg eq 'bitonic');
+	@network = bubble($inputs) if ($alg eq 'bubble');
+	@network = oddeventransposition($inputs) if ($alg eq 'oddeventransposition');
+	@network = balanced($inputs) if ($alg eq 'balanced');
+	@network = oddevenmerge($inputs) if ($alg eq 'oddevenmerge');
+
+	$self->length(scalar @network);
+	$self->comparators(\@network);	# The 'raw' list of comparators.
+
+	#
+	# Re-order the comparator list using the parallel grouping for
+	# the graphs. The resulting parallelism means less stalling
+	# when used in a pipeline.
+	#
+	@grouped = $self->group();
+	#
+	#### @grouped
+	#
+	$self->depth(scalar @grouped);
+	$self->network([map { @$_ } @grouped]);
 
 	return $self;
 }
 
 #
-# @algkeys = algorithms();
+# Save ourselves from the agony of typing
+# Algorithm::Networksort->new();
+#
+sub nwsrt { return __PACKAGE__->new(@_); }
+
+#
+# @algkeys = nw_algorithms();
 #
 # Return a list algorithm choices. Each one is a valid key
 # for the algorithm argument of new().
 #
-sub algorithms
+sub nw_algorithms
 {
-	my $class = shift;
-	return keys %algname;
+	return sort keys %algname;
 }
 
-#
-# @network = nw_comparators($input, %options);
-#
-# The function that starts it all.  Return a list of comparators (a
-# two-item list) that will sort an n-item list.
-#
-sub nw_comparators
+sub algorithm_name
 {
 	my $self = shift;
-	my @comparators;
+	my $algthm = $_[0] // $self->algorithm();
 
-	@comparators = bosenelson($self->$inputs) if ($self->algorithm() eq 'bosenelson');
-	@comparators = hibbard($self->$inputs) if ($self->algorithm() eq 'hibbard');
-	@comparators = batcher($self->$inputs) if ($self->algorithm() eq 'batcher');
-	@comparators = bitonic($self->$inputs) if ($self->algorithm() eq 'bitonic');
-	@comparators = bubble($self->$inputs) if ($self->algorithm() eq 'bubble');
-	@comparators = oddeventransposition($self->$inputs) if ($self->algorithm() eq 'oddeventransposition');
-	@comparators = balanced($self->$inputs) if ($self->algorithm() eq 'balanced');
-	@comparators = oddevenmerge($self->$inputs) if ($self->algorithm() eq 'oddevenmerge');
+	return $algname{$algthm} if (defined $algthm);
+	return "";
+}
 
-	#
-	# Instead of using the list as provided by the algorithms,
-	# re-order it using the grouping for the graphs. This makes
-	# use of parallelism (and less stalling when used in a pipeline).
-	#
-	if ($self->grouping ne 'none')
+sub colorsettings
+{
+	my $self = shift;
+	my %settings = @_;
+	my %old_settings;
+
+	return %colorset if (scalar @_ == 0);
+
+	for my $k (keys %settings)
 	{
-		my @grouped_comparators = nw_group(\@comparators, $inputs,
-				grouping => $self->grouping);
-		@comparators = ();
-		foreach my $group (@grouped_comparators)
+		#
+		# If it's a real part to color, save the
+		# old value, then set it.
+		#
+		if (exists $colorset{$k})
 		{
-			push @comparators, @$group;
+			$old_settings{$k} = $colorset{$k};
+			$colorset{$k} = $settings{$k};
+		}
+		else
+		{
+			carp "colorsettings(): Unknown key '$k'";
 		}
 	}
 
-	return \@comparators;
+	return %old_settings;
+}
+
+sub graphsettings
+{
+	my $self = shift;
+	my %settings = @_;
+	my %old_settings;
+
+	return %graphset if (scalar @_ == 0);
+
+	for my $k (keys %settings)
+	{
+		#
+		# If it's a real part to graph, save the
+		# old value, then set it.
+		#
+		if (exists $graphset{$k})
+		{
+			$old_settings{$k} = $graphset{$k};
+			$graphset{$k} = $settings{$k};
+		}
+		else
+		{
+			carp "graphsettings(): Unknown key '$k'";
+		}
+	}
+
+	return %old_settings;
+}
+
+sub title
+{
+	my $self = shift;
+	return $self->algorithm_name() . " for N = " . $self->inputs;
 }
 
 #
@@ -540,12 +612,12 @@ sub make_network_unidirectional
 
 	my @network = @$network_ref;
 
-	foreach my $i (0..$#network) {
+	for my $i (0..$#network) {
 		my $comparator = $network[$i];
 		my ($x, $y) = @$comparator;
 
 		if ($x > $y) {
-			foreach my $j (($i+1)..$#network) {
+			for my $j (($i+1)..$#network) {
 				my $j_comparator = $network[$j];
 				my ($j_x, $j_y) = @$j_comparator;
 
@@ -609,7 +681,8 @@ sub oddeventransposition {
 # "The Balanced Sorting Network" by M. Dowd, Y. Perl, M Saks, and L. Rudolph
 # ftp://ftp.cs.rutgers.edu/cs/pub/technical-reports/pdfs/DCS-TR-127.pdf
 #
-sub balanced {
+sub balanced
+{
 	my $inputs = shift;
 	my @network;
 
@@ -712,8 +785,8 @@ sub oddevenmerge {
 #
 # $array_ref = $nw->sort(\@array);
 #
-# Use the network of comparators (in @network) to sort the elements
-# in @array.  Returns the reference to the array, which is sorted
+# Use the network of comparators to sort the elements in the
+# array.  Returns the reference to the array, which is sorted
 # in-place.
 #
 # This function is for testing and statistical purposes only, as
@@ -723,9 +796,9 @@ sub oddevenmerge {
 sub sort
 {
 	my $self = shift;
-	my($array) = @_;
+	my $array  = $_[0];
 
-	my $network = $self->comparators();
+	my $network = $self->network();
 
 	#
 	### sort():
@@ -738,7 +811,7 @@ sub sort
 	# number of exchanges.
 	#
 	$swaps = 0;
-	foreach my $comparator (@$network)
+	for my $comparator (@$network)
 	{
 		my($left, $right) = @$comparator;
 
@@ -768,40 +841,66 @@ sub statistics
 }
 
 #
-# $string = nw_format(\@network, $cmp_format, $swap_format, \@index_base);
+# _stringify
+#
+# Show a nicely formatted sorting network, based
+# on the grouped_format and formats attributes.
+#
+sub _stringify
+{
+	my $self = shift;
+
+	return join("",
+		map{ sprintf($self->grouped_format,
+			$self->formatted($_)) } $self->group()
+		); 
+}
+
+#
+# $string = $self->formatted();
 #
 # Return a string that represents the comparators.  Default format is
 # an array of arrays, in standard perl form
 #
-sub nw_format
+sub formatted
 {
-	my($network, $cmp_format, $swap_format, $index_base) = @_;
-	my $string = '';
+	my $self = shift;
+	my $network = $self->network();
 
+	#
+	# Got comparators?
+	#### $network
+	#
 	if (scalar @$network == 0)
 	{
 		carp "No network to format.\n";
 		return "";
 	}
 
-	if (defined $cmp_format)
-	{
-		foreach my $comparator(@$network)
-		{
-			@$comparator = @$index_base[@$comparator] if (defined $index_base);
+	my $string = '';
+	my $index_base = $self->index_base();
+	my(@formats) = $self->formats? @{ $self->formats() }: ();
 
-			$string .= sprintf($cmp_format, @$comparator);
-			$string .= sprintf($swap_format, @$comparator) if ($swap_format);
+	if (scalar @formats)
+	{
+		for my $cmptr (@$network)
+		{
+			@$cmptr = @$index_base[@$cmptr] if (defined $index_base);
+
+			for my $fmt (@formats)
+			{
+				$string .= sprintf($fmt, @$cmptr);
+			}
 		}
 	}
 	else
 	{
 		$string = '[';
-		foreach my $comparator (@$network)
+		for my $cmptr (@$network)
 		{
-			@$comparator = @$index_base[@$comparator] if (defined $index_base);
+			@$cmptr = @$index_base[@$cmptr] if (defined $index_base);
 
-			$string .= "[" . join(",", @$comparator) . "],";
+			$string .= "[" . join(",", @$cmptr) . "],";
 		}
 
 		substr($string, -1, 1) = "]";
@@ -811,26 +910,28 @@ sub nw_format
 }
 
 #
-# @new_grouping = nw_group(\@network, $inputs);
+# @new_grouping = $self->group();
 #
 # Take a list of comparators, and transform it into a list of a list of
 # comparators, each sub-list representing a group that can be printed
 # in a single column.  This makes it easier for the graph routines to
 # render a visual representation of the sorting network.
 #
-sub nw_group
+sub group
 {
-	my $network = shift;
-	my $inputs = shift;
+	my $self = shift;
+	my $network = $self->comparators;
+	my $inputs = $self->inputs;
 	my %opts = @_;
 
 	my @node_range_stack;
 	my @node_stack;
+	my $grp = (exists $opts{grouping})? $opts{grouping}: 'parallel';
 
 	#
 	# Group the comparator nodes into columns.
 	#
-	foreach my $comparator (@$network)
+	for my $comparator (@$network)
 	{
 		my($from, $to) = @$comparator;
 
@@ -840,7 +941,7 @@ sub nw_group
 		# whether we are just trying to arrange comparators in a single
 		# column without concern for overlap.
 		#
-		my @range = (exists $opts{grouping} and $opts{grouping} eq "parallel")?
+		my @range = ($grp eq "parallel")?
 				($from, $to):
 				($from..$to);
 		my $col = scalar @node_range_stack;
@@ -918,11 +1019,11 @@ sub vt_coords
 sub graph_eps
 {
 	my $self = shift;
-	my $network = $self->comparators();
+	my $network = $self->network();
 	my $inputs = $self->inputs();
-	my %grset = $self->graph_settings();
+	my %grset = $self->graphsettings();
 
-	my @node_stack = nw_group($network, $inputs);
+	my @node_stack = $self->group(grouping => 'print');
 	my $columns = scalar @node_stack;
 
 	#
@@ -1009,14 +1110,11 @@ q(
 sub graph_svg
 {
 	my $self = shift;
-	my $network = $self->comparators();
+	my $network = $self->network();
 	my $inputs = $self->inputs();
-	my %grset = $self->graph_settings();
+	my %grset = $self->graphsettings();
 
-	my $ns = $_[0] // "";
-	$ns .= ":" if ($ns);
-
-	my @node_stack = nw_group($network, $inputs);
+	my @node_stack = $self->group(grouping => 'print');
 	my $columns = scalar @node_stack;
 
 	#
@@ -1035,35 +1133,39 @@ sub graph_svg
 	my $ybound = $vcoord[$inputs - 1] + $grset{vt_margin};
 
 	my $right_margin = $hcoord[$columns - 1] + $grset{indent};
+	my $radius = $grset{radius};
 
 	my $string = qq(<svg xmlns="http://www.w3.org/2000/svg" ) .
 		qq(xmlns:xlink="http://www.w3.org/1999/xlink" ) .
 		qq(width="$xbound" height="$ybound" viewbox="0 0 $xbound $ybound">\n) .
-		qq(  <${ns}desc>\n    CreationDate: ) . localtime() .
-		qq(\n    Creator: ) . $self->creator() .  qq(\n  </${ns}desc>\n) .
-		qq(  <${ns}title>) . $self->title() . qq(</${ns}title>\n);
+		qq(  <desc>\n    CreationDate: ) . localtime() .
+		qq(\n    Creator: ) . $self->creator() .  qq(\n  </desc>\n) .
+		qq(  <title>) . $self->title() . qq(</title>\n);
 
 	#
 	# Set up the input line template.
 	#
-	my $b_clr = "stroke:$clrset{inputbegin}";
-	my $l_clr = "stroke:$clrset{inputline}";
-	my $e_clr = "stroke:$clrset{inputend}";
+	my $g_style = "style=\"fill:none; stroke-width:$grset{stroke_width}\"";
+	my $b_style = "style=\"stroke:$clrset{inputbegin}\"";
+	my $l_style = "style=\"stroke:$clrset{inputline}\"";
+	my $e_style = "style=\"stroke:$clrset{inputend}\"";
 
 	$string .=
-		qq(  <${ns}defs>\n) .
+		qq(  <defs>\n) .
 		qq(    <!-- Define the input line template. -->\n) .
-		qq(    <${ns}g id="inputline" style="fill:none; stroke-width:$grset{stroke_width}" >\n) .
-		qq(      <${ns}desc>Input line.</${ns}desc>\n) .
-		qq(      <${ns}circle style="$b_clr" cx="$grset{hz_margin}" cy="0" r="$grset{stroke_width}" />\n) .
-		qq(      <${ns}line style="$l_clr" x1="$grset{hz_margin}" y1="0" x2="$right_margin" y2="0" />\n) .
-		qq(      <${ns}circle style="$e_clr" cx="$right_margin" cy="0" r="$grset{stroke_width}" />\n) .
-		qq(    </${ns}g>\n\n);
+		qq(    <g id="inputline" $g_style" >\n) .
+		qq(      <desc>Input line.</desc>\n) .
+		qq(      <circle $b_style cx="$grset{hz_margin}" cy="0" r="$radius" />\n) .
+		qq(      <line $l_style x1="$grset{hz_margin}" y1="0" x2="$right_margin" y2="0" />\n) .
+		qq(      <circle $e_style cx="$right_margin" cy="0" r="$radius" />\n) .
+		qq(    </g>\n\n);
 
 	#
 	# Set up the comparator templates.
 	#
 	$string .= qq(    <!-- Define the comparator lines, which vary in length. -->\n);
+
+	$g_style = "style=\"stroke-width:$grset{stroke_width}\"";
 
 	my @cmptr = (0) x $inputs;
 	for my $comparator (@$network)
@@ -1078,27 +1180,27 @@ sub graph_svg
 			#
 			# Color the components in the group individually.
 			#
-			$b_clr = "fill:$clrset{compbegin}; stroke:$clrset{compbegin}";
-			$l_clr = "fill:$clrset{compline}; stroke:$clrset{compline}";
-			$e_clr = "fill:$clrset{compend}; stroke:$clrset{compend}";
+			$b_style = "style=\"fill:$clrset{compbegin}; stroke:$clrset{compbegin}\"";
+			$l_style = "style=\"fill:$clrset{compline}; stroke:$clrset{compline}\"";
+			$e_style = "style=\"fill:$clrset{compend}; stroke:$clrset{compend}\"";
 
 			$string .=
-			qq(    <${ns}g id="comparator$clen" style="stroke-width:$grset{stroke_width}" >\n) .
-			qq(      <${ns}desc>Comparator size $clen.</${ns}desc>\n) .
-			qq(      <${ns}circle style="$b_clr" cx="0" cy="0" r="$grset{stroke_width}" />\n) .
-			qq(      <${ns}line style="$l_clr" x1="0" y1="0" x2="0" y2="$endpoint" />\n) .
-			qq(      <${ns}circle style="$e_clr" cx="0" cy="$endpoint" r="$grset{stroke_width}" />\n) .
-			qq(    </${ns}g>\n);
+			qq(    <g id="comparator$clen" $g_style >\n) .
+			qq(      <desc>Comparator size $clen.</desc>\n) .
+			qq(      <circle $b_style cx="0" cy="0" r="$radius" />\n) .
+			qq(      <line $l_style x1="0" y1="0" x2="0" y2="$endpoint" />\n) .
+			qq(      <circle $e_style cx="0" cy="$endpoint" r="$radius" />\n) .
+			qq(    </g>\n);
 		}
 	}
 
 	#
 	# End of definitions.  Draw the input lines as a group.
 	#
-	$string .= qq(  </${ns}defs>\n\n  <!-- Draw the input lines. -->\n);
-	$string .= qq(  <${ns}g id="inputgroup">\n);
-	$string .= qq(    <${ns}use xlink:href="#inputline" y = "$vcoord[$_]" />\n) for (0..$inputs-1);
-	$string .= qq(  </${ns}g>\n);
+	$string .= qq(  </defs>\n\n  <!-- Draw the input lines. -->\n);
+	$string .= qq(  <g id="inputgroup">\n);
+	$string .= qq(    <use xlink:href="#inputline" y = "$vcoord[$_]" />\n) for (0..$inputs-1);
+	$string .= qq(  </g>\n);
 
 	#
 	# Draw our comparators.
@@ -1113,7 +1215,7 @@ sub graph_svg
 			my($from, $to) = @$comparator;
 			my $clen = $to - $from;
 
-			$string .= qq(  <!-- [$from, $to] --> <${ns}use xlink:href="#comparator$clen" x = ") .
+			$string .= qq(  <!-- [$from, $to] --> <use xlink:href="#comparator$clen" x = ") .
 					$hcoord[$hidx] . qq(" y = ") . $vcoord[$from] . qq(" />\n);
 		}
 		$hidx++;
@@ -1131,11 +1233,11 @@ sub graph_svg
 sub graph_text
 {
 	my $self = shift;
-	my $network = $self->comparators();
+	my $network = $self->network();
 	my $inputs = $self->inputs();
-	my %txset = $self->graph_settings();
+	my %txset = $self->graphsettings();
 
-	my @node_stack = nw_group($network, $inputs);
+	my @node_stack = $self->group(grouping => 'print');
 	my @inuse_nodes;
 
 	#
@@ -1174,7 +1276,8 @@ sub graph_text
 
 			if ($node_column[$row] == 0)
 			{
-				$string .= $txset{($column_line[$col] == 1)? 'inputcompline': 'inputline'};
+				$string .= $txset{($column_line[$col] == 1)?
+					'inputcompline': 'inputline'};
 			}
 			elsif ($node_column[$row] == 1)
 			{
@@ -1198,7 +1301,8 @@ sub graph_text
 
 			for my $col (0..$column -1)
 			{
-				$string .= $txset{($column_line[$col] == 0)? 'gapnone': 'gapcompline'};
+				$string .= $txset{($column_line[$col] == 0)?
+					'gapnone': 'gapcompline'};
 			}
 
 			$string .= $txset{gapend};
@@ -1268,7 +1372,7 @@ Algorithm::Networksort - Create Sorting Networks.
   # Print the comparator list using the default format,
   # and print a graph of the list.
   #
-  print $nw;
+  print $nw->formatted "\n";
   print $nw->graph_text(), "\n";
 
 =head1 DESCRIPTION
@@ -1288,16 +1392,18 @@ functions, or templates) that one may insert into source code. It may
 also be used to create images of the sorting networks in either encapsulated
 postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
-=head2 Methods
+=head2 Exported Functions
 
 =head3 algorithms()
 
-Return a list algorithm choices. Each one is a valid value for the
+Return a list of algorithm choices. Each one is a valid value for the
 algorithm key argument of new().
 
 =head3 algorithm_name()
 
 Return the full text name of the algorithm, given its key name.
+
+=head2 Methods
 
 =head3 new()
 
@@ -1305,20 +1411,12 @@ Return the full text name of the algorithm, given its key name.
 
     $nw1 = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
 
-    $nw2 = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg, grouping => $grouptype);
-
-Returns an object that contains, amongh other things, a list of comparators that
+Returns an object that contains, among other things, a list of comparators that
 can sort B<$inputs> items. The algorithm for generating the list may be chosen,
 but by default the sorting network is generated by the Bose-Nelson algorithm.
 The different methods will produce different networks in general, although in
 some cases the differences will be in the arrangement of the comparators, not
 in their number.
-
-Regardless of the algorithm you use, the order the comparators are returned in will
-generally not be in the best order possible to prevent stalling in a CPU's pipeline.
-You may use the option B<grouping => 'parallel'> or B<grouping => 'group'> to
-arrange the comparators in an order optimized for parallelism.
-See the documentation for L<nw_group()>.
 
 The choices for the B<algorithm> key are
 
@@ -1388,62 +1486,87 @@ by the algorithms here.
 
 =back
 
-=head3 nw_format()
+The algorithms as designed generally did not consider parallelism, and the
+order the comparators were returned would generally not be in the best order
+possible to prevent stalling in a CPU's pipeline. But you may want view the
+comparators in their order.
 
-    $string = nw_format(\@network, $format1, $format2, \@index_base);
+=head3 comparators()
+
+Returns the comparators as they were generated by the algorithm, without
+re-ordering. The 'raw' arrangment.
+
+=head3 network()
+
+Returns the comparators re-ordered slightly from the 'raw' order,
+to provide a parallelized version of the comparator list. This is
+the form used when printing the sorting network using L<formats()>.
+
+=head3 formats()
+
+An array reference of format strings, for use in formatted printing (see
+L<formatted()>).  You may use as many sprintf-style formats as you like
+to form your output. 
+
+    $nw->formats("swap(%d, %d) ", "if (card[%d] < card[%d]);\n");
+
+=head3 index_base()
+
+The values to use to reference array indices. By default, array indices
+are zero-based. To use a different index base (most commonly, one-based
+array indexing), use this method.
+
+    $nw->index_base([1 .. $inputs]);
+
+=head3 formatted()
+
+    $string = $nw->formatted();
 
 Returns a formatted string that represents the list of comparators.
-There are two sprintf-style format strings, which lets you separate
-the comparison and exchange portions if you want. The second format
-string is optional.
 
-The first format string may also be ignored, in which case the default
+If no formats have been provided via the L<formats()> method, the default
 format will be used: an array of arrays as represented in perl.
 
-The network sorting pairs are zero-based. If you want the pairs written out
-for some sequence other than 0, 1, 2, ... then you can provide that in
-an array reference.
+Likewise, the network sorting pairs are zero-based. If you want the
+pairs written out for some sequence other than 0, 1, 2, ... then you can
+provide that using L<inputs_base()>.
 
 B<Example 0: you want a string in the default format.>
 
-    print nw_format(\@network);
+    print $nw->formatted();
 
-B<Example 1: you want the output to look like the default format, but one-based instead of zero-based.>
+B<Example 1: you want the output to look like the default format, but
+one-based instead of zero-based.>
 
-    print nw_format(\@network,
-                undef,
-                undef,
-                [1..$inputs]);
+    $nw->input_base([1..$inputs]);
+    print $nw->formatted();
 
 B<Example 2: you want a simple list of SWAP macros.>
 
-    print nw_format(\@network, "SWAP(%d, %d);\n");
+    $nw->formats("SWAP(%d, %d);\n");
+    print $nw->formatted();
 
 B<Example 3: as with example 2, but the SWAP values need to be one-based instead of zero-based.>
 
-    print nw_format(\@network,
-                "SWAP(%d, %d);\n",
-                undef,
-                [1..$inputs]);
+    $nw->input_base([1..$inputs]);
+    $nw->formats("SWAP(%d, %d);\n");
+    print $nw->formatted();
 
 B<Example 4: you want a series of comparison and swap statements.>
 
-    print nw_format(\@network,
-                "if (v[%d] < v[%d]) then\n",
+    $nw->formats("if (v[%d] < v[%d]) then\n",
                 "    exchange(v, %d, %d)\nend if\n");
+    print $nw->formatted();
 
 B<Example 5: you want the default format to use letters, not numbers.>
 
-    my @alphabase = ('a'..'z')[0..$inputs];
+    $nw->input_base( [('a'..'z')[0..$inputs]] );
+    $nw->formats("[%s,%s],");      # Note that we're using the string flag.
 
-    my $string = '[' .
-            nw_format(\@network,
-		"[%s,%s],",      # Note that we're using the string flag.
-		undef,
-		\@alphabase);
-
+    my $string = '[' . $nw->formatted();
     substr($string, -1, 1) = ']';    # Overwrite the trailing comma.
-    print $string;
+
+    print $string, "\n";
 
 =head3 colorsettings()
 
@@ -1631,10 +1754,10 @@ The characters that end the gap between the input lines.
 
 =back
 
-=head3 nw_group()
+=head3 group()
 
-This is a function called by the graphing methods. The
-function takes the comparator list and returns a list of comparator lists, each
+This is a method called by the graphing methods. The
+method takes the comparator list and returns a list of comparator lists, each
 sub-list representing a group of comparators that can be printed in a single
 column. There is one option available, 'grouping', that will produce a grouping
 that represents parallel operations of comparators. Its values may be:
@@ -1647,7 +1770,7 @@ Return the sequence as generated by the algorithm with no changes. This will
 also happen if the B<grouping> key isn't present, or if an incorrect (or
 misspelled) value for B<grouping> is used.
 
-=item 'group'
+=item 'print'
 
 Arrange the sequence as parallel as possible for printing.
 
@@ -1661,19 +1784,19 @@ The chances that you will need to use this function are slim, but the
 following code snippet may represent an example:
 
     my $nw = Algorithm::Networksort->new(inputs => 8, algorithm => 'batcher');
-    my @network = $nw->comparators();
-    my @grouped_network = nw_group(\@network, $inputs, grouping=>'parallel');
+    my @network = @{ $nw->network() };
+    my @grouped_network = $self->group(\@network, $inputs, grouping=>'parallel');
 
     print "There are ", scalar @network,
         " comparators in this network, grouped into\n",
         scalar @grouped_network, " parallel operations.\n\n";
 
-    foreach my $group (@grouped_network)
+    for my $group (@grouped_network)
     {
         print nw_format($group), "\n";
     }
 
-    @grouped_network = nw_group(\@network, $inputs);
+    @grouped_network = $self->group(\@network, $inputs);
     print "\nThis will be graphed in ", scalar @grouped_network,
         " columns.\n";
 

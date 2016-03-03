@@ -1,4 +1,4 @@
-use Algorithm::Networksort qw(nw_sort);
+use Algorithm::Networksort;
 
 #
 # Test using all binary combinations.  (Skipping the all-zeros
@@ -6,8 +6,7 @@ use Algorithm::Networksort qw(nw_sort);
 #
 sub zero_one
 {
-	my $inputs = shift;
-	my $network_ref = shift;
+	my $nw = shift;
 	my $zo = qr/^0+1+$/;
 
 	foreach my $x (1 .. (1 << $inputs) - 2)
@@ -17,7 +16,7 @@ sub zero_one
 
 		next if ($x_binary =~ $zo);	# An already-sorted sequence.
 
-		nw_sort($network_ref, \@bitlist);
+		$nw->sort(\@bitlist);
 
 		$sort_string = join "", @bitlist;
 

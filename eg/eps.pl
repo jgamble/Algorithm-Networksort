@@ -1,5 +1,5 @@
 use Getopt::Long;
-use Algorithm::Networksort ':all';
+use Algorithm::Networksort;
 
 use strict;
 use warnings;
@@ -24,12 +24,12 @@ GetOptions('compbegin=s' => \$colorset{compbegin},
 	'algorithm=s' => \$alg,
 );
 
-%colorset = nw_color(%colorset);
-
 my $inputs = $ARGV[0] || 8;
 
-my @network = nw_comparators($inputs, algorithm => $alg);
+my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
 
-print nw_graph(\@network, $inputs, graph => 'eps');
+$nw->colorsettings(%colorset);
+
+print $nw->graph_eps();
 
 exit(0);

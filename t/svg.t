@@ -1,13 +1,10 @@
 use Test::More;
 
-use Algorithm::Networksort qw(:all);
+use Algorithm::Networksort;
 use strict;
 use warnings;
 
-my $inputs = 7;
-my $algorithm = 'hibbard';
-my $name = nw_algorithm_name($algorithm);
-my @network = nw_comparators($inputs, algorithm=>$algorithm);
+my $nw = Algorithm::Networksort->new(inputs => 7, algorithm => "hibbard");
 
 eval "use Test::XML::Easy";
 if ($@)
@@ -22,20 +19,21 @@ else
 	#
 	# Start with a simple network.
 	#
-	my $svg = nw_graph(\@network, $inputs, graph => 'svg');
+	my $svg = $nw->graph_svg();
 
 	is_well_formed_xml($svg, "Test with default SVG settings");
 
 	#
 	# Now create one that has the defaults changed.
 	#
-	nw_color(inputbegin=>'red',
+	$nw->title($nw->inputs . " input network using $nw->algorithm");
+
+	$nw->colorsettings(inputbegin=>'red',
 		inputend=>'blue',
 		compbegin=>'magenta',
 		compend=>'teal');
 
-	$svg = nw_graph(\@network, 7, graph => 'svg',
-		title => "$name, N = 7",
+	$nw->graphsettings(
 		vt_margin => 25,
 		vt_sep => 16,
 		indent => 8,
@@ -43,5 +41,6 @@ else
 		hz_sep => 16,
 		stroke_width => 4);
 
+	$svg = $nw->graph_svg();
 	is_well_formed_xml($svg, "Test with defaults changed");
 
