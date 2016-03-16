@@ -43,7 +43,7 @@ my $build = $class->new(
 
 	requires => {
 		perl=> '5.10.1',
-		Moo => '2.000000',
+		Moose => '0',
 		'namespace::autoclean' => '0.16',
 	},
 
@@ -63,7 +63,8 @@ my $build = $class->new(
 
 	meta_merge => {
 		keywords => [qw(sort sorting-network
-			batcher bitonic hibbard bose-nelson bubble)],
+			batcher bitonic hibbard bose-nelson bubble
+			odd-even balanced)],
 
 		resources => {
 			repository => 'git://github.com/jgamble/Algorithm-Networksort.git',
