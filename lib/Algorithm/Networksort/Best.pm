@@ -803,7 +803,7 @@ keys are used to retrieve a sorting network from nw_best_comparators().
 
 Return a descriptive title for the network, given a key.
 
-=head3 nw_best_comparators
+=head3 nwsrt_best()
 
 Return the list of comparators, given a key. The list is
 identical in form to a list returned by nw_comparator(), and like
