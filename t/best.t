@@ -24,11 +24,11 @@ else
 
 	for (@names)
 	{
-		my $title = nw_best_title($_);
-		my @network = nw_best_comparators($_);
-		my $inputs = nw_best_inputs($_);
+		my $nw = nwsrt_best(name => $_);
+		my $network_ref = $nw->comparators();
+		my $inputs = $nw->inputs();
 
-		my $status = zero_one($inputs, \@network);
+		my $status = zero_one($inputs, $network_ref);
 		is($status, "pass", "$_, $status, '$title'");
 	}
 }

@@ -8,7 +8,7 @@ my $name;
 
 if (@ARGV == 0)
 {
-	warn "Please give an input size or a key name.";
+	warn "best.pl <input size>\nbest.pl <key name>\n\nPlease give an input size or a key name.";
 	exit(0);
 }
 
@@ -32,17 +32,8 @@ elsif ($ARGV[0] ne "")
 	die "Unknown network name" unless (defined $inputs);
 }
 
-my(@network) = nw_best_comparators($name);
-my(@node_stack) = nw_group(\@network, $inputs, grouping => 'parallel');
+my $nw = nwsrt_best(name => $name);
 
-print "There are ", scalar @network, " comparators in this network, grouped into\n",
-	scalar @node_stack, " parallel operations.\n\n";
-
-foreach my $group (@node_stack)
-{
-	print nw_format($group), "\n";
-}
-
-
+print $nw->formatted();
 
 exit(0);
