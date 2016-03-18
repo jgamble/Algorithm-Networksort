@@ -14,8 +14,6 @@ use warnings;
 %EXPORT_TAGS = (
 	'all' => [ qw(
 		nwsrt_best
-		nw_best_comparators
-		nw_best_inputs_range
 		nw_best_inputs
 		nw_best_names
 		nw_best_title
@@ -370,6 +368,26 @@ my %nw_best_by_name = (
 		[12,14], [7,8], [13,14], [14,16], [5,7], [9,10], [11,12], [6,9],
 		[12,15], [14,15], [6,7], [8,11], [10,13], [8,9], [12,13], [7,8],
 		[13,14], [10,11], [11,12], [9,10]]},
+	morwen23 => {
+		inputs => 23,
+		depth => 18,
+		title => '23-Input Network by Morwenn',
+		comparators =>
+		[[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11], [12, 13], [14, 15],
+		[16, 17], [18, 19], [20, 21], [1, 3], [5, 7], [9, 11], [0, 2], [4, 6],
+		[8, 10], [13, 15], [17, 19], [12, 14], [16, 18], [20, 22], [1, 2], [5, 6],
+		[9, 10], [13, 14], [17, 18], [21, 22], [1, 5], [6, 10], [13, 17], [18, 22],
+		[5, 9], [2, 6], [17, 21], [14, 18], [1, 5], [6, 10], [0, 4], [7, 11],
+		[13, 17], [18, 22], [12, 16], [3, 7], [4, 8], [15, 19], [16, 20], [0, 4],
+		[7, 11], [12, 16], [1, 4], [7, 10], [3, 8], [13, 16], [19, 22], [15, 20],
+		[2, 3], [8, 9], [14, 15], [20, 21], [2, 4], [7, 9], [3, 5], [6, 8],
+		[14, 16], [19, 21], [15, 17], [18, 20], [3, 4], [5, 6], [7, 8], [15, 16],
+		[17, 18], [19, 20], [0, 12], [1, 13], [2, 14], [3, 15], [4, 16], [5, 17],
+		[6, 18], [7, 19], [8, 20], [9, 21], [10, 22], [2, 12], [3, 13], [10, 20],
+		[11, 21], [4, 12], [5, 13], [6, 14], [7, 15], [8, 16], [9, 17], [10, 18],
+		[11, 19], [8, 12], [9, 13], [10, 14], [11, 15], [6, 8], [10, 12], [14, 16],
+		[7, 9], [11, 13], [15, 17], [1, 2], [3, 4], [5, 6], [7, 8], [9, 10],
+		[11, 12], [13, 14], [15, 16], [17, 18], [19, 20], [21, 22]]},
 	senso23 => {
 		inputs => 23,
 		depth => 22,
@@ -390,6 +408,27 @@ my %nw_best_by_name = (
 		[15,17], [5,7], [9,10], [10,14], [6,11], [14,16], [15,16], [6,7],
 		[10,11], [9,12], [11,13], [13,14], [8,9], [7,8], [14,15], [9,10],
 		[8,9], [12,14], [11,12], [12,13], [10,11], [11,12]]},
+	morwen24 => {
+		inputs => 24,
+		depth => 18,
+		title => '24-Input Network by Morwenn',
+		comparators =>
+		[[0,1], [2,3], [4,5], [6,7], [8,9], [10,11], [12,13], [14,15],
+		[16,17], [18,19], [20,21], [22,23], [1,3], [5,7], [9,11], [0,2],
+		[4,6], [8,10], [13,15], [17,19], [21,23], [12,14], [16,18], [20,22],
+		[1,2], [5,6], [9,10], [13,14], [17,18], [21,22], [1,5], [6,10],
+		[13,17], [18,22], [5,9], [2,6], [17,21], [14,18], [1,5], [6,10],
+		[0,4], [7,11], [13,17], [18,22], [12,16], [19,23], [3,7], [4,8],
+		[15,19], [16,20], [0,4], [7,11], [12,16], [19,23], [1,4], [7,10],
+		[3,8], [13,16], [19,22], [15,20], [2,3], [8,9], [14,15], [20,21],
+		[2,4], [7,9], [3,5], [6,8], [14,16], [19,21], [15,17], [18,20],
+		[3,4], [5,6], [7,8], [15,16], [17,18], [19,20], [0,12], [1,13],
+		[2,14], [3,15], [4,16], [5,17], [6,18], [7,19], [8,20], [9,21],
+		[10,22], [11,23], [2,12], [3,13], [10,20], [11,21], [4,12], [5,13],
+		[6,14], [7,15], [8,16], [9,17], [10,18], [11,19], [8,12], [9,13],
+		[10,14], [11,15], [6,8], [10,12], [14,16], [7,9], [11,13], [15,17],
+		[1,2], [3,4], [5,6], [7,8], [9,10], [11,12], [13,14], [15,16],
+		[17,18], [19,20], [21,22]]},
 );
 
 #
@@ -419,7 +458,7 @@ INIT
 }
 
 #
-# $nw = nwsrtbest(name => $name);
+# $nw = nwsrt_best(name => $name);
 #
 sub nwsrt_best
 {
@@ -429,7 +468,7 @@ sub nwsrt_best
 	my $name = $opts{name};
 
 	croak "Unknown network name '$name'" unless (exists $nw_best_by_name{$name});
-	my %nw_struct = $nw_best_by_name{$name};
+	my %nw_struct = %{ $nw_best_by_name{$name} };
 	my $title = $opts{title} // $nw_struct{title};
 
 	return Algorithm::Networksort->new(
@@ -439,14 +478,6 @@ sub nwsrt_best
 		depth => $nw_struct{depth},
 		title => $title,
 	);
-}
-
-#
-# Return a list of the available inputs.
-#
-sub nw_best_inputs_range
-{
-	return keys %nw_best_by_input;
 }
 
 #
@@ -502,32 +533,6 @@ sub nw_best_title
 	return $nw_best_by_name{$key}{title};
 }
 
-#
-# @network = nw_best_comparators($key, %options);
-#
-# The function that finds the network.  Return a list of comparators (a
-# two-item list) that will sort an n-item list.
-#
-sub nw_best_comparators
-{
-	my $key = shift;
-	my(%opts) = @_;
-	my @comparators;
-	my $inputs;
-	
-	unless (exists $nw_best_by_name{$key})
-	{
-		carp "Unknown 'best' key '$key'.";
-		return ();
-	}
-
-	@comparators = @{$nw_best_by_name{$key}{comparators}};
-	$inputs = ${$nw_best_by_name{$key}}{inputs};
-
-	return @comparators;
-}
-
-
 1;
 __END__
 
@@ -555,7 +560,7 @@ Algorithm::Networksort::Best - Sorting Networks Created by Non-Heuristic Means.
   #
   # Having selected an optimal sorting network, get the comparators.
   #
-  @network = nw_best_comparators('floyd09');
+  @network = nwsrt_(name => 'floyd09');
 
   #
   # Print the list, and print the graph of the list.
@@ -771,9 +776,23 @@ A 22-input network of depth 15 found using the SENSO program by V. K. Valsalam a
 
 =over 4
 
+=item morwen23
+
+A 23-input network of depth 18 found by Morwen.
+
 =item senso23
 
 A 23-input network of depth 22 found using the SENSO program by V. K. Valsalam and R. Miikkulaainen.
+
+=back
+
+=head2 24-Input Networks
+
+=over 4
+
+=item morwen24
+
+A 24-input network of depth 18 found by Morwen L<https://github.com/Morwenn/cpp-sort/wiki/Original-research#sorting-networks-23-and-24>.
 
 =back
 
@@ -785,29 +804,22 @@ nw_best() and nw_best_key().
 
 =head2 Functions
 
-=head3 nw_best_inputs_range
+=head3 nwsrt_best
 
-Returns the list of input values covered by the 'best' sorting networks.
+Return the Algorithm::Networksort object, given a key name. Also takes an optional
+title to override the default.
 
 =head3 nw_best_inputs
 
 Returns the key names of the sorting networks, given an input size.
-The keys are used to retrieve a sorting network from nw_best_comparators().
 
 =head3 nw_best_names
 
-Return the list of keys to access the individual networks by key name. The
-keys are used to retrieve a sorting network from nw_best_comparators().
+Return the list of keys to access the individual networks by key name.
 
 =head3 nw_best_title
 
 Return a descriptive title for the network, given a key.
-
-=head3 nw_best_comparators
-
-Return the list of comparators, given a key. The list is
-identical in form to a list returned by nw_comparator(), and like
-nw_comparator(), it takes an option 'grouping'.
 
 =head1 ACKNOWLEDGMENTS
 
@@ -834,13 +846,18 @@ sorting networks: L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
 =item
 
 The 18 and 22 input networks found by Sherenaz Waleed Al-Haj Baddar
-are described in her paper "Finding Better Sorting Networks" at
+are described in her dissertation "Finding Better Sorting Networks" at
 L<http://etd.ohiolink.edu/view.cgi?acc_num=kent1239814529>.
 
 =item
 
 The Symmetry and Evolution based Network Sort Optimization (SENSO) found more
 networks for inputs of 9 through 23.
+
+=item
+
+Morwen's 23 and 24-input networks are described at
+L<https://github.com/Morwenn/cpp-sort/wiki/Original-research#sorting-networks-23-and-24>.
 
 =back
 
