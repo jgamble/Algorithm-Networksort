@@ -25,15 +25,11 @@ if ($ARGV[0] =~ /^[0-9]+/)
 	print "Available names for size $inputs: ", join(", ", @names), "\n";
 	exit(0);
 }
-elsif ($ARGV[0] ne "")
-{
-	$name = $ARGV[0];
-	$inputs = nw_best_inputs($name);
-	die "Unknown network name" unless (defined $inputs);
-}
+
+$name = $ARGV[0] || die "Please use a keyname or a number.";
 
 my $nw = nwsrt_best(name => $name);
 
-print $nw->formatted();
+print $nw;
 
 exit(0);

@@ -29,7 +29,7 @@ else
 		my $inputs = $nw->inputs();
 
 		my $status = zero_one($inputs, $network_ref);
-		is($status, "pass", "$_, $status, '$title'");
+		is($status, "pass", "$_, $status, " . $nw->title());
 	}
 }
 
