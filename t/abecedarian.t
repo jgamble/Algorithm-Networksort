@@ -22,15 +22,15 @@ require "t/zero_one.pl";
 #
 our $author_testing = $ENV{AUTHOR_TESTING};
 our @input_range = $author_testing? (3..17): (3..10);
-#our @algorithms = nw_algorithms();
-our @algorithms = qw(hibbard batcher);
+our @algorithms = nwsrt_algorithms();
+
 plan tests => (scalar @input_range  * scalar @algorithms);
 
 for my $algorithm (@algorithms)
 {
 	for my $inputs (@input_range)
 	{
-		my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $algorithm);
+		my $nw = nwsrt(inputs => $inputs, algorithm => $algorithm);
 		my $status = zero_one($nw);
 		is($status, "pass", $nw->title() . ": $status");
 	}

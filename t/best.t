@@ -25,10 +25,8 @@ else
 	for (@names)
 	{
 		my $nw = nwsrt_best(name => $_);
-		my $network_ref = $nw->comparators();
-		my $inputs = $nw->inputs();
 
-		my $status = zero_one($inputs, $network_ref);
+		my $status = zero_one($nw);
 		is($status, "pass", "$_, $status, " . $nw->title());
 	}
 }
