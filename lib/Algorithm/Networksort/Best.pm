@@ -468,7 +468,7 @@ INIT
 
 =head1 SYNOPSIS
 
-    use Algorithm::Networksort qw(:all);
+    use Algorithm::Networksort;
     use Algorithm::Networksort::Best qw(:all);
 
     my $inputs = 9;

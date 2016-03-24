@@ -3,13 +3,11 @@ package Algorithm::Networksort;
 use 5.010001;
 
 use Moose;
-#use MooseX::AttributesShortcuts;
-#use Moose::Exporter;
+use Moose::Exporter;
 use namespace::autoclean;
 
 use Carp;
 use integer;
-#use Exporter;
 
 #
 # Three # for "I am here" messages, four # for variable dumps.
@@ -17,14 +15,14 @@ use integer;
 #
 #use Smart::Comments ('####');
 
-#our @ISA = qw(Exporter);
-#our @EXPORT = ( qw(nwsrt
-#nw_algorithms 
-#) );
-
-#Moose::Exporter->setup_import_methods(
-	#as_is => ['nwsrt'],
-#);
+#
+# Export a couple of convenience functions:
+# nwsrt(), which is shorthand for Algorithm::Networksort->new();
+# and algorithms(), which gives a list of algorithm keys.
+#
+Moose::Exporter->setup_import_methods(
+	as_is => [\&nwsrt_algorithms, \&nwsrt],
+);
 
 our $VERSION = '2.00';
 
@@ -185,46 +183,40 @@ postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
 =head2 Exported Functions
 
+For convenience's sake, there are two exported functions to save typing
+and inconvenient look-ups.
+
+=head3 nwsrt()
+
+Simple function to save the programmer from the agony of typing
+C<Algorithm::Networksort->new()>:
+
+    use Algorithm::Networksort;
+
+    my $nw = nwsrt(inputs => 13, algorithm => 'bitonic');
+
 =cut
 
-#
-# Save ourselves from the agony of typing
-# Algorithm::Networksort->new();
-#
 sub nwsrt { return __PACKAGE__->new(@_); }
 
-#
-# @algkeys = nw_algorithms();
-#
-# Return a list algorithm choices. Each one is a valid key
-# for the algorithm argument of new().
-#
 
-=head3 algorithms()
+=head3 nwsrt_algorithms()
 
-Return a list of algorithm choices, by key name. Each one is a valid
-value for the algorithm key argument of new().
+Return a sorted list algorithm choices. Each one is a valid key for the
+algorithm argument of Algorithm::Networksort->new(), or L<nwsrt()>.
+
+    use Algorithm::Networksort;
+
+    my @alg_keys = nwsrt_algorithms();
+
+    print "The available keys for the algorithm argument are (",
+            join(", ", @alg_keys), ")\n";
 
 =cut
 
-sub nw_algorithms
+sub nwsrt_algorithms
 {
 	return sort keys %algname;
-}
-
-=head3 algorithm_name()
-
-Return the full text name of the algorithm, given its key name.
-
-=cut
-
-sub algorithm_name
-{
-	my $self = shift;
-	my $algthm = $_[0] // $self->algorithm();
-
-	return $algname{$algthm} if (defined $algthm);
-	return "";
 }
 
 =head2 Methods
@@ -398,6 +390,21 @@ prevent stalling in a CPU's pipeline.
 This is the form used when printing the sorting network using L<formats()>.
 
 =cut
+
+=head3 algorithm_name()
+
+Return the full text name of the algorithm, given its key name.
+
+=cut
+
+sub algorithm_name
+{
+	my $self = shift;
+	my $algthm = $_[0] // $self->algorithm();
+
+	return $algname{$algthm} if (defined $algthm);
+	return "";
+}
 
 =head3 formats()
 
