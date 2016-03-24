@@ -9,16 +9,16 @@ sub zero_one
 	my $nw = shift;
 	my $zo = qr/^0+1+$/;
 
-	foreach my $x (1 .. (1 << $inputs) - 2)
+	foreach my $x (1 .. (1 << $nw->inputs()) - 2)
 	{
-		my @bitlist = (split(//, unpack("B32", pack("N", $x))))[32 - $inputs .. 31];
+		my @bitlist = (split(//, unpack("B32", pack("N", $x))))[32 - $nw->inputs() .. 31];
 		my $x_binary = join "", @bitlist;
 
 		next if ($x_binary =~ $zo);	# An already-sorted sequence.
 
 		$nw->sort(\@bitlist);
 
-		$sort_string = join "", @bitlist;
+		my $sort_string = join "", @bitlist;
 
 		return "'$x_binary' ($x) sorted to '$sort_string'." unless ($sort_string =~ $zo);
 	}
