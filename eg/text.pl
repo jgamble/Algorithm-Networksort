@@ -11,7 +11,7 @@ my %txtset = (compbegin => undef,
 	inputend => undef,
 	inputline => undef,
 );
-my $alg = 'hibbard';
+my $alg = 'bosenelson';
 
 GetOptions(
 	'compbegin=s' => \$txtset{compbegin},
@@ -25,7 +25,7 @@ GetOptions(
 
 my $inputs = $ARGV[0] || 8;
 
-my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
+my $nw = nwsrt(inputs => $inputs, algorithm => $alg);
 
 #
 # Ensure we're only passing in set parameters. And, if it's defined

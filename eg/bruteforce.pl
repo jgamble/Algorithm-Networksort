@@ -1,36 +1,43 @@
 use Algorithm::Networksort;
 
 my $inputs = $ARGV[0] || 5;
-my $n_comparators = $ARGV[1] || $inputs * 2;
-my @network = ([0,1]) x $n_comparators;
-my $combinations = (($inputs * ($inputs - 1))/2)**$n_comparators;
+my $cmptrcount = $ARGV[1] || $inputs * 2;
+my @network = ([0,1]) x $cmptrcount;
+my $combinations = (($inputs * ($inputs - 1))/2)**$cmptrcount;
 my $start_at = $ARGV[2] || 0;
 
-print "N = $inputs, searching for a sort using $n_comparators comparators.\nNumber of possible combinations: $combinations\n\n";
+print "N = $inputs, searching for a sort using $cmptrcount comparators.\nNumber of possible combinations: $combinations\n\n";
 
+my $nw;
 
+#
+# Skip over the ones we're not starting with.
+#
 for (my $j = 0; $j < $start_at; $j++)
 {
-	@network = next_network(\@network, $inputs, $n_comparators);
+	@network = next_network(\@network, $inputs, $cmptrcount);
 }
+
 for (my $j = $start_at; $j < $combinations; $j++)
 {
-	print STDERR sprintf("%08d: ", $j), nw_format(\@network), "\n" if (($j % 1000) == 0);
-	@network = next_network(\@network, $inputs, $n_comparators);
-	if (zero_one(\@network, $inputs) == 0)
+	@network = next_network(\@network, $inputs, $cmptrcount);
+	$nw = nwsrt(inputs => $inputs, algorithm => 'none',
+			comparators => [@network],
+			title => sprintf("%08d: ", $j) . "$inputs Inputs"
+		);
+
+	print STDERR $nw->title(), $nw->formatted(), "\n" if (($j % 1000) == 0);
+
+	if (zero_one($nw) eq 'pass')
 	{
 		print "Solved! at $j of $combinations.\n";
 		last;
 	}
 }
-my @grouped_network = nw_group(\@network, $inputs);
 
-foreach my $group (@grouped_network)
-{
-	print nw_format($group), "\n";
-}
+print $nw->title(), "\n", $nw, "\n";
 
-print nw_graph(\@network, $inputs);
+print $nw->graph_text();
 
 exit(0);
 
@@ -63,28 +70,29 @@ sub next_network
 	return @$network_ref;
 }
 
+#
+# Test using all binary combinations.  (Skipping the all-zeros
+# and all-ones cases, which are already pretty well sorted).
+#
 sub zero_one
 {
-	my $network_ref = shift;
-	my $inputs = shift;
-	my $error;
+	my $nw = shift;
+	my $zo = qr/^0+1+$/;
 
-	foreach my $x (1 .. (1 << $inputs) - 2)
+	foreach my $x (1 .. (1 << $nw->inputs()) - 2)
 	{
-		my @bitlist = (split(//, unpack("B32", pack("N", $x))))[32 - $inputs .. 31];
+		my @bitlist = (split(//, unpack("B32", pack("N", $x))))[32 - $nw->inputs() .. 31];
 		my $x_binary = join "", @bitlist;
 
-		nw_sort($network_ref, \@bitlist);
+		next if ($x_binary =~ $zo);	# An already-sorted sequence.
 
-		$sort_string = join "", @bitlist;
+		$nw->sort(\@bitlist);
 
-		if ($sort_string !~ qr/^0+1+$/)
-		{
-#			$error = "Failed to sort at $x [0b$x_binary].  Returned '$sort_string' instead.";
-			return $x;
-		}
+		my $sort_string = join "", @bitlist;
+
+		return "'$x_binary' ($x) sorted to '$sort_string'." unless ($sort_string =~ $zo);
 	}
 
-	return 0;
+	return "pass";
 }
 

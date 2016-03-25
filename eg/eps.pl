@@ -12,7 +12,7 @@ my %colorset = (compbegin => undef,
 	inputline => undef,
 	foreground => undef,
 );
-my $alg = 'hibbard';
+my $alg = 'bosenelson';
 
 GetOptions('compbegin=s' => \$colorset{compbegin},
 	'compend=s' => \$colorset{compend},
@@ -26,7 +26,7 @@ GetOptions('compbegin=s' => \$colorset{compbegin},
 
 my $inputs = $ARGV[0] || 8;
 
-my $nw = Algorithm::Networksort->new(inputs => $inputs, algorithm => $alg);
+my $nw = nwsrt(inputs => $inputs, algorithm => $alg);
 
 $nw->colorsettings(%colorset);
 
