@@ -772,6 +772,7 @@ sub nwsrt_best
 		comparators => $nw_struct{comparators},
 		depth => $nw_struct{depth},
 		title => $title,
+		nwid => $name,
 	);
 }
 
