@@ -11,6 +11,7 @@ lib/Algorithm/Networksort/Best.pm
 t/00-load.t
 t/abecedarian.t
 t/best.t
+t/fmt.t
 t/pod.t
 t/svg.t
 t/zero_one.pl

@@ -1,5 +1,31 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+2.00
+	Tue Apr 12 2016
+	- The module now returns the sorting network as an object.
+	  This is obviously a major change; please see the documentation
+	  for reassuring examples.  The OO basis is Moose, plus
+	  Moose::Exporter for a couple of convenience functions. The
+	  function-heavy Version 1.30  will remain on CPAN for at
+	  least another year in the mean time.
+	- The collection of 'best' networks has been greatly added to,
+	  thanks to the efforts of Morwenn. These networks now reside
+	  in their own child module, Algorithm::Networksort::Best.
+	  It could be argued that the module should be named
+	  Algorithm::Networksort::Optimal, but 'optimal' has seven
+	  letters and 'best' has four, so 'best' wins.
+	- Doug Hoyte astonishingly provided code for another three
+	  algorithms: odd-even merge, odd-even transposition, and balanced.
+	- The example scripts in eg/ have been updated and in some
+	  cases improved.
+	- Found untested cases (formats in particular) and added them
+	  to the tests.
+	- SVG output is massively improved. The graphing example is now
+	  HTML5 instead of XML, beginning circles now cover their line
+	  instead of vice versa, background color is now supported, and
+	  the ids of graph elements now have a random component in them
+	  so as not to confuse the parser if more than one graph is on
+	  the page (this is one that bit me).
 1.31
 	Sat Mar 22 2012
 	- Good grief, I mis-spelled nw_comparators() in the
