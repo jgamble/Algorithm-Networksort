@@ -93,6 +93,11 @@ has inputs => (
 	isa => 'Int', is => 'ro', required => 1,
 );
 
+has nwid => (
+	isa => 'Str', is => 'rw', required => 0,
+	predicate => 'has_nwid',
+);
+
 has comparators => (
 	isa => 'ArrayRef[ArrayRef[Int]]', is => 'rw', required => 0,
 	predicate => 'has_comparators',
@@ -339,11 +344,13 @@ sub BUILD
 		@grouped = $self->group();
 		$self->depth(scalar @grouped);
 		$self->network([map { @$_ } @grouped]);
+		$self->nwid("nonalgorithmic-" . sprintf("%02d", $inputs)) unless ($self->has_nwid());
 
 		return $self;
 	}
 
 	croak "Unknown algorithm '$alg'" unless (exists $algname{$alg});
+	$self->nwid($alg . sprintf("%02d", $inputs));
 
 	@network = bosenelson($inputs) if ($alg eq 'bosenelson');
 	@network = hibbard($inputs) if ($alg eq 'hibbard');
@@ -412,7 +419,7 @@ An array reference of format strings, for use in formatted printing (see
 L<formatted()>).  You may use as many sprintf-style formats as you like
 to form your output. 
 
-    $nw->formats([ "swap(%d, %d) ", "if (card[%d] < card[%d]);\n" ]);
+    $nw->formats([ "swap(%d, %d) ", "if ($card[%d] < $card[%d]);\n" ]);
 
 =head3 index_base()
 
@@ -461,7 +468,7 @@ Default color for the graph as a whole.
 
 =item background
 
-Color of the background.  Currently unimplemented in SVG.
+Color of the background. Currently unimplemented in SVG.
 
 =back
 
@@ -526,11 +533,15 @@ The indention between the start of the input lines and the placement of
 the first comparator. The same value spaces the placement of the final
 comparator and the end of the input lines.
 
+=item radius
+
+I<Default value: 2.>
+Radii of the circles used to end the comparator and input lines.
+
 =item stroke_width
 
 I<Default value: 2.>
-Width of the lines used to define comparators and input lines. Also
-represents the radii of the endpoint circles.
+Width of the lines used to define comparators and input lines.
 
 =item vt_margin
 
@@ -1478,7 +1489,6 @@ sub group
 		push @{$node_stack[$col]}, $comparator;
 	}
 
-	#push @node_stack, [sort {${$a}[0] <=> ${$b}[0]} splice @nodes, 0] if (@nodes);
 	return @node_stack;
 }
 
@@ -1619,9 +1629,6 @@ q(
 =head3 graph_svg()
 
 Returns a string that graphs out the network's comparators.
-Has an optional namespace argument, a tag prefix that allows programs to
-distinguish between different XML
-vocabularies that have the same tag. If undefined, no tag prefix is used.
 
 The output will be between E<lt>svgE<gt> and E<lt>/svgE<gt> tags:
 
@@ -1634,11 +1641,6 @@ The output will be between E<lt>svgE<gt> and E<lt>/svgE<gt> tags:
 
 =cut
 
-#
-# $string = graph_svg();
-# $string = graph_svg($namespace);
-#
-#
 sub graph_svg
 {
 	my $self = shift;
@@ -1667,12 +1669,24 @@ sub graph_svg
 	my $right_margin = $hcoord[$columns - 1] + $grset{indent};
 	my $radius = $grset{radius};
 
-	my $string = qq(<svg xmlns="http://www.w3.org/2000/svg" ) .
-		qq(xmlns:xlink="http://www.w3.org/1999/xlink" ) .
+	my $string = qq(<svg xmlns="http://www.w3.org/2000/svg"\n) .
+		qq(     xmlns:xlink="http://www.w3.org/1999/xlink" ) .
 		qq(width="$xbound" height="$ybound" viewbox="0 0 $xbound $ybound">\n) .
+		qq(  <title>) . $self->title() . qq(</title>\n) .
 		qq(  <desc>\n    CreationDate: ) . localtime() .
-		qq(\n    Creator: ) . $self->creator() .  qq(\n  </desc>\n) .
-		qq(  <title>) . $self->title() . qq(</title>\n);
+		qq(\n    Creator: ) . $self->creator() .  qq(\n  </desc>\n);
+
+	#
+	# Set a background color by inserting as the first element a <rect>
+	# with the full size of the view and a fill of the desired color.
+	# Use %colorset instead of %clrset, since we've just torpedoed
+	# the background value if it was an undef.
+	#
+	if (defined $colorset{background})
+	{
+		my $filler = $colorset{background};
+		$string .= qq(  <rect width="100%" height="100%" fill="$filler" />\n);
+	}
 
 	#
 	# Set up the input line template.
@@ -1685,8 +1699,8 @@ sub graph_svg
 	$string .=
 		qq(  <defs>\n) .
 		qq(    <!-- Define the input line template. -->\n) .
-		qq(    <g id="inputline" $g_style" >\n) .
-		qq(      <desc>Input line.</desc>\n) .
+		qq(    <g id="inputline" $g_style >\n) .
+		qq(      <desc>Input line</desc>\n) .
 		qq(      <circle $b_style cx="$grset{hz_margin}" cy="0" r="$radius" />\n) .
 		qq(      <line $l_style x1="$grset{hz_margin}" y1="0" x2="$right_margin" y2="0" />\n) .
 		qq(      <circle $e_style cx="$right_margin" cy="0" r="$radius" />\n) .
@@ -1717,43 +1731,46 @@ sub graph_svg
 			$e_style = "style=\"fill:$clrset{compend}; stroke:$clrset{compend}\"";
 
 			$string .=
-			qq(    <g id="comparator$clen" $g_style >\n) .
-			qq(      <desc>Comparator size $clen.</desc>\n) .
-			qq(      <circle $b_style cx="0" cy="0" r="$radius" />\n) .
+			qq(    <g id="cmptr$clen" $g_style >\n) .
+			qq(      <desc>Comparator size $clen</desc>\n) .
 			qq(      <line $l_style x1="0" y1="0" x2="0" y2="$endpoint" />\n) .
+			qq(      <circle $b_style cx="0" cy="0" r="$radius" />\n) .
 			qq(      <circle $e_style cx="0" cy="$endpoint" r="$radius" />\n) .
 			qq(    </g>\n);
 		}
 	}
 
+	$string .= qq(  </defs>\n\n);
+
 	#
 	# End of definitions.  Draw the input lines as a group.
 	#
-	$string .= qq(  </defs>\n\n  <!-- Draw the input lines. -->\n);
-	$string .= qq(  <g id="inputgroup">\n);
-	$string .= qq(    <use xlink:href="#inputline" y = "$vcoord[$_]" />\n) for (0..$inputs-1);
-	$string .= qq(  </g>\n);
+	$string .= q(  <g id=") . $self->nwid() . qq(">\n);
+	$string .= qq(    <!-- Draw the input lines. -->\n);
+	$string .= qq(    <use xlink:href="#inputline" y="$vcoord[$_]" />\n) for (0..$inputs-1);
 
 	#
 	# Draw our comparators.
 	# Each member of a group of comparators is drawn in the same column.
 	#
-	$string .= qq(\n  <!-- Draw the comparator lines. -->\n);
+	$string .= qq(\n    <!-- Draw the comparator lines. -->\n);
 	my $hidx = 0;
 	for my $group (@node_stack)
 	{
+		my $h = $hcoord[$hidx++];
+
 		for my $comparator (@$group)
 		{
 			my($from, $to) = @$comparator;
 			my $clen = $to - $from;
+			my $v = $vcoord[$from];
 
-			$string .= qq(  <!-- [$from, $to] --> <use xlink:href="#comparator$clen" x = ") .
-					$hcoord[$hidx] . qq(" y = ") . $vcoord[$from] . qq(" />\n);
+			$string .= qq(    <!-- [$from, $to] -->) .
+				qq(<use xlink:href="#cmptr$clen" x="$h" y="$v" />\n);
 		}
-		$hidx++;
 	}
 
-	$string .= qq(</svg>\n);
+	$string .= q(  </g> <!-- End of ) . $self->nwid() . qq( -->\n</svg>\n);
 	return $string;
 }
 
