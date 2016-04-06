@@ -1,5 +1,6 @@
 use Getopt::Long;
 use Algorithm::Networksort;
+use Algorithm::Networksort::Best qw(:all);
 
 use strict;
 use warnings;
@@ -11,8 +12,10 @@ my %colorset = (compbegin => undef,
 	inputend => undef,
 	inputline => undef,
 	foreground => undef,
+	background => undef,
 );
 my $alg = 'bosenelson';
+my($nw, $best);
 
 GetOptions('compbegin=s' => \$colorset{compbegin},
 	'compend=s' => \$colorset{compend},
@@ -21,12 +24,22 @@ GetOptions('compbegin=s' => \$colorset{compbegin},
 	'inputend=s' => \$colorset{inputend},
 	'inputline=s'=> \$colorset{inputline},
 	'foreground=s' => \$colorset{foreground},
+	'background=s' => \$colorset{background},
 	'algorithm=s' => \$alg,
+	'best=s' => \$best,
 );
 
 my $inputs = $ARGV[0] || 8;
 
-my $nw = nwsrt(inputs => $inputs, algorithm => $alg);
+if (defined $best)
+{
+	$nw = nwsrt_best(name => $best);
+}
+else
+{
+	$nw = nwsrt(inputs => $inputs, algorithm => $alg);
+}
+
 
 $nw->colorsettings(%colorset);
 
