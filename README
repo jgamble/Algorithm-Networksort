@@ -36,7 +36,7 @@ three of which are more for comparison and teaching purposes).
 
 It also has networks that were found to be superior in comparison
 count or parallel count ('depth') to those generated automatically
-by these algorithms
+by these algorithms (thanks to Morwenn, who contributed to this).
 
 There is a flexible formatting function that will allow you to
 print out your network in many ways (see documentation).  There

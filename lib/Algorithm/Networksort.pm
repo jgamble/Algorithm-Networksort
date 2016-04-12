@@ -105,10 +105,12 @@ has comparators => (
 
 has network => (
 	isa => 'ArrayRef[ArrayRef[Int]]', is => 'rw', required => 0,
+	predicate => 'has_network',
 );
 
 has ['depth', 'length'] => (
 	isa => 'Int', is => 'rw', required => 0,
+	init_arg => 0,
 );
 
 has creator => (
@@ -149,6 +151,42 @@ my $swaps = 0;
 
 Algorithm::Networksort - Create Sorting Networks.
 
+=begin html
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink" width="105" height="61" viewbox="0 0 105 61">
+  <rect width="100%" height="100%" fill="#c8c8c8" />
+  <defs>
+    <g id="I_41c1" style="fill:none; stroke-width:2" >
+      <circle style="stroke:#206068" cx="18" cy="0" r="2" />
+      <line style="stroke:#206068" x1="18" y1="0" x2="87" y2="0" />
+      <circle style="stroke:#206068" cx="87" cy="0" r="2" />
+    </g>
+
+    <g id="C1_41c1" style="stroke-width:2" >
+      <line style="fill:#206068; stroke:#206068" x1="0" y1="0" x2="0" y2="15" />
+      <circle style="fill:#206068; stroke:#206068" cx="0" cy="0" r="2" />
+      <circle style="fill:#206068; stroke:#206068" cx="0" cy="15" r="2" />
+    </g>
+    <g id="C2_41c1" style="stroke-width:2" >
+      <line style="fill:#206068; stroke:#206068" x1="0" y1="0" x2="0" y2="30" />
+      <circle style="fill:#206068; stroke:#206068" cx="0" cy="0" r="2" />
+      <circle style="fill:#206068; stroke:#206068" cx="0" cy="30" r="2" />
+    </g>
+  </defs>
+
+  <g id="N_41c1">
+    <use xlink:href="#I_41c1" y="8" /> <use xlink:href="#I_41c1" y="23" />
+    <use xlink:href="#I_41c1" y="38" /> <use xlink:href="#I_41c1" y="53" />
+
+    <use xlink:href="#C1_41c1" x="27" y="8" /> <use xlink:href="#C1_41c1" x="27" y="38" />
+    <use xlink:href="#C2_41c1" x="44" y="8" /> <use xlink:href="#C2_41c1" x="61" y="23" />
+    <use xlink:href="#C1_41c1" x="78" y="23" />
+  </g>
+</svg>
+
+=end html
+
 =head1 SYNOPSIS
 
     use Algorithm::Networksort;
@@ -168,6 +206,13 @@ Algorithm::Networksort - Create Sorting Networks.
     #
     print $nw->formatted(), "\n";
     print $nw->graph_text(), "\n";
+
+    #
+    # Set up a pretty SVG image.
+    #
+    $nw->graphsettings(vt_margin => 8, vt_sep => 13, hz_sep=>15);
+    $nw->colorsettings(foreground => "#206068", background => "#c8c8c8");
+    print $nw->graph_svg();
 
 =head1 DESCRIPTION
 
@@ -194,7 +239,7 @@ and inconvenient look-ups.
 =head3 nwsrt()
 
 Simple function to save the programmer from the agony of typing
-C<Algorithm::Networksort->new()>:
+C<Algorithm::Networksort-E<gt>new()>:
 
     use Algorithm::Networksort;
 
@@ -288,7 +333,7 @@ useful for illustrative purposes.
 
 Use a naive odd-even transposition sort. This is a primitive sort closely
 related to bubble sort except it is more parallel. Because other algorithms
-are more efficient, this sort is included mostly for illustrative purposes.
+are more efficient, this sort is included for illustrative purposes.
 
 =item 'balanced'
 
@@ -308,7 +353,8 @@ outside source, using the C<comparators> option.
     #
     @cmptr = ([1,2], [0,2], [0,1], [3,4], [0,3], [1,4], [2,4], [1,3], [2,3]);
 
-    $nw = Algorithm::Networksort->new(inputs => 5, algorithm => 'none',
+    $nw = Algorithm::Networksort->new(inputs => 5,
+                algorithm => 'none',
                 comparators => [@cmptr]);
 
 Internally, this is what L<nwsrt_best()|Algorithm::Networksort::Best/nwsrt_best()>
@@ -337,13 +383,22 @@ sub BUILD
 	#
 	if ($alg eq 'none')
 	{
-		croak "No network provided" unless ($self->has_comparators);
+		croak "No comparators provided" unless ($self->has_comparators);
 		$self->length(scalar @{ $self->comparators });
-		$self->network($self->comparators);
 
-		@grouped = $self->group();
-		$self->depth(scalar @grouped);
-		$self->network([map { @$_ } @grouped]);
+		#
+		# Algorithm::Networksort::Best will set these, so
+		# only go through with this if this is a user-provided
+		# sequence of comparators.
+		#
+		unless ($self->has_network and $self->depth > 0)
+		{
+			@grouped = $self->group();
+			$self->network($self->comparators);
+			$self->depth(scalar @grouped);
+			$self->network([map { @$_ } @grouped]);
+		}
+
 		$self->nwid("nonalgorithmic-" . sprintf("%02d", $inputs)) unless ($self->has_nwid());
 
 		return $self;
@@ -411,237 +466,6 @@ sub algorithm_name
 
 	return $algname{$algthm} if (defined $algthm);
 	return "";
-}
-
-=head3 formats()
-
-An array reference of format strings, for use in formatted printing (see
-L<formatted()>).  You may use as many sprintf-style formats as you like
-to form your output. 
-
-    $nw->formats([ "swap(%d, %d) ", "if ($card[%d] < $card[%d]);\n" ]);
-
-=head3 index_base()
-
-The values to use to reference array indices in formatted printing (see
-L<formatted()>). By default, array indices are zero-based. To use a
-different index base (most commonly, one-based array indexing), use
-this method.
-
-    $nw->index_base([1 .. $inputs]);
-
-=head3 colorsettings()
-
-Sets the colors of the graph parts, currently for SVG output only.
-
-The parts are named.
-
-=over 4
-
-=item inputbegin
-
-Opening of input line.
-
-=item inputline
-
-The input line.
-
-=item inputend
-
-Closing of the input line.
-
-=item compbegin
-
-Opening of the comparator.
-
-=item compline
-
-The comparator line.
-
-=item compend
-
-Closing of the comparator line.
-
-=item foreground
-
-Default color for the graph as a whole.
-
-=item background
-
-Color of the background. Currently unimplemented in SVG.
-
-=back
-
-All parts not named are reset to 'undef', and will be colored with the
-default 'foreground' color.  The foreground color itself has a default
-value of 'black'.  The one exception is the 'background' color, which
-has no default color at all.
-
-=cut
-
-sub colorsettings
-{
-	my $self = shift;
-	my %settings = @_;
-	my %old_settings;
-
-	return %colorset if (scalar @_ == 0);
-
-	for my $k (keys %settings)
-	{
-		#
-		# If it's a real part to color, save the
-		# old value, then set it.
-		#
-		if (exists $colorset{$k})
-		{
-			$old_settings{$k} = $colorset{$k};
-			$colorset{$k} = $settings{$k};
-		}
-		else
-		{
-			carp "colorsettings(): Unknown key '$k'";
-		}
-	}
-
-	return %old_settings;
-}
-
-=head3 graphsettings()
-
-=head4 Options for graph_svg() and graph_eps():
-
-SVG measurements are in pixels.
-
-=over 3
-
-=item hz_margin
-
-I<Default value: 18.>
-The horizontal spacing between the edges of the graphic and the
-sorting network.
-
-=item hz_sep
-
-I<Default value: 12.>
-The spacing separating the horizontal lines (the input lines).
-
-=item indent
-
-I<Default value: 9.>
-The indention between the start of the input lines and the placement of
-the first comparator. The same value spaces the placement of the final
-comparator and the end of the input lines.
-
-=item radius
-
-I<Default value: 2.>
-Radii of the circles used to end the comparator and input lines.
-
-=item stroke_width
-
-I<Default value: 2.>
-Width of the lines used to define comparators and input lines.
-
-=item vt_margin
-
-I<Default value: 21.>
-The vertical spacing between the edges of the graphic and the sorting network.
-
-=item vt_sep
-
-I<Default value: 12.>
-The spacing separating the vertical lines (the comparators).
-
-=back
-
-=head4 Options for graph_text():
-
-=over 3
-
-=item inputbegin
-
-I<Default value: "o-".>
-The starting characters for the input line.
-
-=item inputline
-
-I<Default value: "---".>
-The characters that make up an input line.
-
-=item inputcompline
-
-I<Default value: "-|-".>
-The characters that make up an input line that has a comparator crossing
-over it.
-
-=item inputend
-
-I<Default value: "-o\n".>
-The characters that make up the end of an input line.
-
-=item compbegin
-
-I<Default value: "-^-".>
-The characters that make up an input line with the starting point of
-a comparator.
-
-=item compend
-
-I<Default value: "-v-".>
-The characters that make up an input line with the end point of
-a comparator.
-
-=item gapbegin
-
-I<Default value: "  " (two spaces).>
-The characters that start the gap between the input lines.
-
-=item gapcompline
-
-I<Default value: " | " (space vertical bar space).>
-The characters that make up the gap with a comparator passing through.
-
-=item gapnone
-
-I<Default value: "  " (three spaces).>
-The characters that make up the space between the input lines.
-
-=item gapend
-
-I<Default value: "  \n" (two spaces and a newline).>
-The characters that end the gap between the input lines.
-
-=back
-
-=cut
-
-sub graphsettings
-{
-	my $self = shift;
-	my %settings = @_;
-	my %old_settings;
-
-	return %graphset if (scalar @_ == 0);
-
-	for my $k (keys %settings)
-	{
-		#
-		# If it's a real part to graph, save the
-		# old value, then set it.
-		#
-		if (exists $graphset{$k})
-		{
-			$old_settings{$k} = $graphset{$k};
-			$graphset{$k} = $settings{$k};
-		}
-		else
-		{
-			carp "graphsettings(): Unknown key '$k'";
-		}
-	}
-
-	return %old_settings;
 }
 
 #
@@ -1246,6 +1070,69 @@ sub statistics
 		);
 }
 
+=head2 Methods For Printing
+
+The network object by default prints itself in a grouped format; that is
+
+    my $nw = nwsrt(inputs => 4, algorithm => 'bosenelson');
+    print $nw;
+
+Will result in the output
+
+    [[0,1], [2,3],
+    [0,2], [1,3],
+    [1,2]]
+
+=head3 formats()
+
+An array reference of format strings, for use in formatted printing (see
+L<formatted()>).  You may use as many sprintf-style formats as you like
+to form your output. 
+
+    $nw->formats([ "swap(%d, %d) ", "if ($card[%d] < $card[%d]);\n" ]);
+
+=head3 index_base()
+
+The values to use to reference array indices in formatted printing (see
+L<formatted()>). By default, array indices are zero-based. To use a
+different index base (most commonly, one-based array indexing), use
+this method.
+
+    $nw->index_base([1 .. $inputs]);
+
+=cut
+
+sub _dflt_formatted
+{
+	my $self = shift;
+	my $network = $_[0];
+
+	#
+	# Got comparators?
+	#### $network
+	#
+	if (scalar @$network == 0)
+	{
+		carp "No network to format.\n";
+		return "";
+	}
+
+	my $string = "";
+	my $index_base = $self->index_base();
+
+	for my $cmptr (@$network)
+	{
+		@$cmptr = @$index_base[@$cmptr] if (defined $index_base);
+
+		$string .= "[" . join(",", @$cmptr) . "], ";
+	}
+
+	chop $string;
+	chop $string;
+
+	return $string;
+}
+
 #
 # _stringify
 #
@@ -1259,14 +1146,9 @@ sub _stringify
 
 	for my $grp (@grouped)
 	{
-		for my $cmptr (@$grp)
-		{
-			$string .= "[" . join(",", @$cmptr) . "],";
-		}
-
-		$string .= "\n";
+		$string .= $self->_dflt_formatted($grp) . "\n";
 	}
-	substr($string, -1, 1) = "]";
+	substr($string, -1, 1) = ']';    # Overwrite the trailing "\n".
 	return $string;
 }
 
@@ -1337,69 +1219,52 @@ sub formatted
 		return "";
 	}
 
+	#
+	# Got formats?
+	#
+	my(@formats) = $self->formats? @{ $self->formats() }: ();
+	unless (scalar @formats)
+	{
+		return '[' . $self->_dflt_formatted($network) . ']';
+	}
+
 	my $string = '';
 	my $index_base = $self->index_base();
-	my(@formats) = $self->formats? @{ $self->formats() }: ();
 
-	if (scalar @formats)
+	for my $cmptr (@$network)
 	{
-		for my $cmptr (@$network)
+		@$cmptr = @$index_base[@$cmptr] if (defined $index_base);
+
+		for my $fmt (@formats)
 		{
-			@$cmptr = @$index_base[@$cmptr] if (defined $index_base);
-
-			for my $fmt (@formats)
-			{
-				$string .= sprintf($fmt, @$cmptr);
-			}
+			$string .= sprintf($fmt, @$cmptr);
 		}
-	}
-	else
-	{
-		$string = '[';
-		for my $cmptr (@$network)
-		{
-			@$cmptr = @$index_base[@$cmptr] if (defined $index_base);
-
-			$string .= "[" . join(",", @$cmptr) . "],";
-		}
-
-		substr($string, -1, 1) = "]";
 	}
 
 	return $string;
 }
 
-#
-# @new_grouping = $self->group();
-#
-# Take a list of comparators, and transform it into a list of a list of
-# comparators, each sub-list representing a group that can be printed
-# in a single column.  This makes it easier for the graph routines to
-# render a visual representation of the sorting network.
-#
 =head3 group()
 
-This is a method called by the graphing methods. The
-method takes the comparator list and returns a list of comparator lists, each
-sub-list representing a group of comparators that can be printed in a single
-column. There is one option available, 'grouping', that will produce a grouping
+Takes the comparator list and returns a list of comparator lists, each
+sub-list representing a group of comparators that can be operate without
+interfering with each other, depending on what is needed for
+interference-free grouping.
+
+There is one option available, 'grouping', that will produce a grouping
 that represents parallel operations of comparators. Its values may be:
 
 =over 3
 
-=item 'none'
+=item 'graph'
 
-Return the sequence as generated by the algorithm with no changes. This will
-also happen if the B<grouping> key isn't present, or if an incorrect (or
-misspelled) value for B<grouping> is used.
-
-=item 'print'
-
-Arrange the sequence as parallel as possible for printing.
+Group the comnparators as parallel as possible for graphing.
 
 =item 'parallel'
 
-Arrange the sequence in parallel so that it has a minimum depth.
+Arrange the sequence in parallel so that it has a minimum depth. This,
+after flattening the lists into a single list again, is what is used to
+produce the sequence in L<network()>.
 
 =back
 
@@ -1414,7 +1279,7 @@ following code snippet may represent an example:
 
     print $nw, "\n";
 
-    my @grouped_network = $nw->group(grouping=>'print');
+    my @grouped_network = $nw->group(grouping=>'graph');
     print "\nThis will be graphed in ", scalar @grouped_network,
         " columns.\n";
 
@@ -1442,10 +1307,29 @@ sub group
 
 	my @node_range_stack;
 	my @node_stack;
-	my $grp = (exists $opts{grouping})? $opts{grouping}: 'parallel';
+	my $grp = $opts{grouping} // 'parallel';
+ 
+	#
+	# Group the comparator nodes by N.
+	#
+	if ($grp =~ /^[0-9]+$/)
+	{
+		my @s = @$network;
+		while (scalar @s)
+		{
+			push @node_stack, [splice(@s, 0, $grp)];
+		}
+		return @node_stack;
+	}
+
+	unless ($grp =~ /^(graph|parallel)$/)
+	{
+		carp "Unknown option '$grp'";
+		return undef;
+	}
 
 	#
-	# Group the comparator nodes into columns.
+	# Group the comparator nodes by columns.
 	#
 	for my $comparator (@$network)
 	{
@@ -1526,6 +1410,8 @@ sub vt_coords
 	return @vcoord;
 }
 
+=head2 Methods For Graphing
+
 =head3 graph_eps()
 
 Returns a string that graphs out the network's comparators. The format
@@ -1537,11 +1423,6 @@ will be encapsulated postscript.
 
 =cut
 
-#
-# $string = $nw->graph_eps();
-#
-# Returns a string that graphs the sorting network in encapsulated postscript.
-#
 sub graph_eps
 {
 	my $self = shift;
@@ -1549,7 +1430,7 @@ sub graph_eps
 	my $inputs = $self->inputs();
 	my %grset = $self->graphsettings();
 
-	my @node_stack = $self->group(grouping => 'print');
+	my @node_stack = $self->group(grouping => 'graph');
 	my $columns = scalar @node_stack;
 
 	#
@@ -1626,18 +1507,84 @@ q(
 	return $string;
 }
 
+#svg.pl --background="#9494A4" --indent=15 --hz_sep=22 --hz_margin=16 --vt_margin=20 --stroke_width=4 --radius=3 --algorithm=bosenelson 4
+
 =head3 graph_svg()
 
 Returns a string that graphs out the network's comparators.
 
-The output will be between E<lt>svgE<gt> and E<lt>/svgE<gt> tags:
+    $nw = Algorithm::Networksort(inputs => 4, algorithm => 'bitonic');
+    $svg = $nw->graph_svg();
 
-    my $nw = Algorithm::Networksort(inputs = 4, algorithm => 'bitonic');
+The output will use the default colors and sizes, and will be enclosed between
+E<lt>svgE<gt> and E<lt>/svgE<gt> tags.
 
-    print qq(<?xml version="1.0" standalone="no"?>\n),
-          qq(<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ),
-          qq("http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n),
-          $nw->graph_svg();
+An example of using the output in an HTML setting:
+
+    $nw = nwsrt_best(name => 'floyd09');   # See Algorithm::Networksort::Best
+
+    $nw->colorsettings(compbegin => '#04c', compend => '#40c');
+    $svg = $nw->graph_svg();
+
+=begin html
+
+<p>Embedded in a web page, this will produce</p>
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink" width="278" height="154" viewbox="0 0 278 154">
+  <defs>
+    <g id="I_51b6" style="fill:none; stroke-width:2" >
+      <circle style="stroke:black" cx="18" cy="0" r="2" />
+      <line style="stroke:black" x1="18" y1="0" x2="260" y2="0" />
+      <circle style="stroke:black" cx="260" cy="0" r="2" />
+    </g>
+
+    <g id="C1_51b6" style="stroke-width:2" >
+      <line style="fill:black; stroke:black" x1="0" y1="0" x2="0" y2="14" />
+      <circle style="fill:#04c; stroke:#04c" cx="0" cy="0" r="2" />
+      <circle style="fill:#40c; stroke:#40c" cx="0" cy="14" r="2" />
+    </g>
+    <g id="C3_51b6" style="stroke-width:2" >
+      <line style="fill:black; stroke:black" x1="0" y1="0" x2="0" y2="42" />
+      <circle style="fill:#04c; stroke:#04c" cx="0" cy="0" r="2" />
+      <circle style="fill:#40c; stroke:#40c" cx="0" cy="42" r="2" />
+    </g>
+    <g id="C2_51b6" style="stroke-width:2" >
+      <line style="fill:black; stroke:black" x1="0" y1="0" x2="0" y2="28" />
+      <circle style="fill:#04c; stroke:#04c" cx="0" cy="0" r="2" />
+      <circle style="fill:#40c; stroke:#40c" cx="0" cy="28" r="2" />
+    </g>
+    <g id="C4_51b6" style="stroke-width:2" >
+      <line style="fill:black; stroke:black" x1="0" y1="0" x2="0" y2="56" />
+      <circle style="fill:#04c; stroke:#04c" cx="0" cy="0" r="2" />
+      <circle style="fill:#40c; stroke:#40c" cx="0" cy="56" r="2" />
+    </g>
+  </defs>
+
+  <g id="floyd09_51b6">
+    <use xlink:href="#I_51b6" y="21" /> <use xlink:href="#I_51b6" y="35" />
+    <use xlink:href="#I_51b6" y="49" /> <use xlink:href="#I_51b6" y="63" />
+    <use xlink:href="#I_51b6" y="77" /> <use xlink:href="#I_51b6" y="91" />
+    <use xlink:href="#I_51b6" y="105" /> <use xlink:href="#I_51b6" y="119" />
+    <use xlink:href="#I_51b6" y="133" />
+
+    <use xlink:href="#C1_51b6" x="27" y="21" /> <use xlink:href="#C1_51b6" x="27" y="63" />
+    <use xlink:href="#C1_51b6" x="27" y="105" /> <use xlink:href="#C1_51b6" x="41" y="35" />
+    <use xlink:href="#C1_51b6" x="41" y="77" /> <use xlink:href="#C1_51b6" x="41" y="119" />
+    <use xlink:href="#C1_51b6" x="55" y="21" /> <use xlink:href="#C1_51b6" x="55" y="63" />
+    <use xlink:href="#C1_51b6" x="55" y="105" /> <use xlink:href="#C3_51b6" x="69" y="21" />
+    <use xlink:href="#C3_51b6" x="83" y="63" /> <use xlink:href="#C3_51b6" x="97" y="21" />
+    <use xlink:href="#C3_51b6" x="111" y="35" /> <use xlink:href="#C3_51b6" x="125" y="77" />
+    <use xlink:href="#C3_51b6" x="139" y="35" /> <use xlink:href="#C3_51b6" x="153" y="49" />
+    <use xlink:href="#C3_51b6" x="167" y="91" /> <use xlink:href="#C3_51b6" x="181" y="49" />
+    <use xlink:href="#C2_51b6" x="195" y="35" /> <use xlink:href="#C2_51b6" x="195" y="91" />
+    <use xlink:href="#C4_51b6" x="209" y="49" /> <use xlink:href="#C2_51b6" x="223" y="77" />
+    <use xlink:href="#C2_51b6" x="237" y="49" /> <use xlink:href="#C1_51b6" x="237" y="91" />
+    <use xlink:href="#C1_51b6" x="251" y="49" />
+  </g>
+</svg>
+
+=end html
 
 =cut
 
@@ -1648,7 +1595,14 @@ sub graph_svg
 	my $inputs = $self->inputs();
 	my %grset = $self->graphsettings();
 
-	my @node_stack = $self->group(grouping => 'print');
+	#
+	# The 'salt' is used to ensure that the id attributes
+	# are unique -- I got bit by this when I put two SVG
+	# images in the same page.
+	#
+	my $salt = "_" . sprintf("%x", int(rand(0x7fff)));
+
+	my @node_stack = $self->group(grouping => 'graph');
 	my $columns = scalar @node_stack;
 
 	#
@@ -1699,10 +1653,10 @@ sub graph_svg
 	$string .=
 		qq(  <defs>\n) .
 		qq(    <!-- Define the input line template. -->\n) .
-		qq(    <g id="inputline" $g_style >\n) .
+		qq(    <g id="I$salt" $g_style >\n) .
 		qq(      <desc>Input line</desc>\n) .
-		qq(      <circle $b_style cx="$grset{hz_margin}" cy="0" r="$radius" />\n) .
 		qq(      <line $l_style x1="$grset{hz_margin}" y1="0" x2="$right_margin" y2="0" />\n) .
+		qq(      <circle $b_style cx="$grset{hz_margin}" cy="0" r="$radius" />\n) .
 		qq(      <circle $e_style cx="$right_margin" cy="0" r="$radius" />\n) .
 		qq(    </g>\n\n);
 
@@ -1731,7 +1685,7 @@ sub graph_svg
 			$e_style = "style=\"fill:$clrset{compend}; stroke:$clrset{compend}\"";
 
 			$string .=
-			qq(    <g id="cmptr$clen" $g_style >\n) .
+			qq(    <g id="C$clen$salt" $g_style >\n) .
 			qq(      <desc>Comparator size $clen</desc>\n) .
 			qq(      <line $l_style x1="0" y1="0" x2="0" y2="$endpoint" />\n) .
 			qq(      <circle $b_style cx="0" cy="0" r="$radius" />\n) .
@@ -1745,9 +1699,9 @@ sub graph_svg
 	#
 	# End of definitions.  Draw the input lines as a group.
 	#
-	$string .= q(  <g id=") . $self->nwid() . qq(">\n);
+	$string .= qq(  <g id=") . $self->nwid() . qq($salt">\n);
 	$string .= qq(    <!-- Draw the input lines. -->\n);
-	$string .= qq(    <use xlink:href="#inputline" y="$vcoord[$_]" />\n) for (0..$inputs-1);
+	$string .= qq(    <use xlink:href="#I$salt" y="$vcoord[$_]" />\n) for (0..$inputs-1);
 
 	#
 	# Draw our comparators.
@@ -1765,12 +1719,12 @@ sub graph_svg
 			my $clen = $to - $from;
 			my $v = $vcoord[$from];
 
-			$string .= qq(    <!-- [$from, $to] -->) .
-				qq(<use xlink:href="#cmptr$clen" x="$h" y="$v" />\n);
+			$string .= qq(    <!-- [$from,$to] -->) .
+				qq(<use xlink:href="#C$clen$salt" x="$h" y="$v" />\n);
 		}
 	}
 
-	$string .= q(  </g> <!-- End of ) . $self->nwid() . qq( -->\n</svg>\n);
+	$string .= qq(  </g>\n</svg>\n);
 	return $string;
 }
 
@@ -1782,6 +1736,17 @@ Returns a string that graphs out the network's comparators in plain text.
 
     print $nw->graph_text();
 
+This will produce
+
+    o--^-----^--^--o
+       |     |  |   
+    o--v--^--|--v--o
+          |  |      
+    o--^--v--|--^--o
+       |     |  |   
+    o--v-----v--v--o
+
+
 =cut
 
 sub graph_text
@@ -1791,7 +1756,7 @@ sub graph_text
 	my $inputs = $self->inputs();
 	my %txset = $self->graphsettings();
 
-	my @node_stack = $self->group(grouping => 'print');
+	my @node_stack = $self->group(grouping => 'graph');
 	my @inuse_nodes;
 
 	#
@@ -1866,6 +1831,230 @@ sub graph_text
 	return $string;
 }
 
+=head3 colorsettings()
+
+Sets the colors of the graph parts, currently for SVG output only.
+
+The parts are named.
+
+    my %old_colors = $nw->colorsettings(inputbegin => "#c04", inputend => "#c40");
+
+=over 4
+
+=item inputbegin
+
+Opening of input line.
+
+=item inputline
+
+The input line.
+
+=item inputend
+
+Closing of the input line.
+
+=item compbegin
+
+Opening of the comparator.
+
+=item compline
+
+The comparator line.
+
+=item compend
+
+Closing of the comparator line.
+
+=item foreground
+
+Default color for the graph as a whole.
+
+=item background
+
+Color of the background. Currently unimplemented in SVG.
+
+=back
+
+All parts not named are reset to 'undef', and will be colored with the
+default 'foreground' color.  The foreground color itself has a default
+value of 'black'.  The one exception is the 'background' color, which
+has no default color at all.
+
+=cut
+
+sub colorsettings
+{
+	my $self = shift;
+	my %settings = @_;
+	my %old_settings;
+
+	return %colorset if (scalar @_ == 0);
+
+	for my $k (keys %settings)
+	{
+		#
+		# If it's a real part to color, save the
+		# old value, then set it.
+		#
+		if (exists $colorset{$k})
+		{
+			$old_settings{$k} = $colorset{$k};
+			$colorset{$k} = $settings{$k};
+		}
+		else
+		{
+			carp "colorsettings(): Unknown key '$k'";
+		}
+	}
+
+	return %old_settings;
+}
+
+=head3 graphsettings()
+
+Alter the graphing settings, be it pixel measurements
+or ascii-art characters.
+
+    #
+    # Set hz_margin, saving its old value for later.
+    #
+    my %old_gset = $nw->graphsettings(hz_margin => 12);
+
+=head4 Options for graph_svg() and graph_eps():
+
+SVG measurements are in pixels.
+
+=over 3
+
+=item hz_margin
+
+I<Default value: 18.>
+The horizontal spacing between the edges of the graphic and the
+sorting network.
+
+=item hz_sep
+
+I<Default value: 12.>
+The spacing separating the horizontal lines (the input lines).
+
+=item indent
+
+I<Default value: 9.>
+The indention between the start of the input lines and the placement of
+the first comparator. The same value spaces the placement of the final
+comparator and the end of the input lines.
+
+=item radius
+
+I<Default value: 2.>
+Radii of the circles used to end the comparator and input lines.
+
+=item stroke_width
+
+I<Default value: 2.>
+Width of the lines used to define comparators and input lines.
+
+=item vt_margin
+
+I<Default value: 21.>
+The vertical spacing between the edges of the graphic and the sorting network.
+
+=item vt_sep
+
+I<Default value: 12.>
+The spacing separating the vertical lines (the comparators).
+
+=back
+
+=head4 Options for graph_text():
+
+=over 3
+
+=item inputbegin
+
+I<Default value: "o-".>
+The starting characters for the input line.
+
+=item inputline
+
+I<Default value: "---".>
+The characters that make up an input line.
+
+=item inputcompline
+
+I<Default value: "-|-".>
+The characters that make up an input line that has a comparator crossing
+over it.
+
+=item inputend
+
+I<Default value: "-o\n".>
+The characters that make up the end of an input line.
+
+=item compbegin
+
+I<Default value: "-^-".>
+The characters that make up an input line with the starting point of
+a comparator.
+
+=item compend
+
+I<Default value: "-v-".>
+The characters that make up an input line with the end point of
+a comparator.
+
+=item gapbegin
+
+I<Default value: "  " (two spaces).>
+The characters that start the gap between the input lines.
+
+=item gapcompline
+
+I<Default value: " | " (space vertical bar space).>
+The characters that make up the gap with a comparator passing through.
+
+=item gapnone
+
+I<Default value: "  " (three spaces).>
+The characters that make up the space between the input lines.
+
+=item gapend
+
+I<Default value: "  \n" (two spaces and a newline).>
+The characters that end the gap between the input lines.
+
+=back
+
+=cut
+
+sub graphsettings
+{
+	my $self = shift;
+	my %settings = @_;
+	my %old_settings;
+
+	return %graphset if (scalar @_ == 0);
+
+	for my $k (keys %settings)
+	{
+		#
+		# If it's a real part to graph, save the
+		# old value, then set it.
+		#
+		if (exists $graphset{$k})
+		{
+			$old_settings{$k} = $graphset{$k};
+			$graphset{$k} = $settings{$k};
+		}
+		else
+		{
+			carp "graphsettings(): Unknown key '$k'";
+		}
+	}
+
+	return %old_settings;
+}
+
 #
 # @newlist = semijoin($expr, $itemcount, @list);
 #
@@ -1909,8 +2098,12 @@ __END__
 
 =head1 ACKNOWLEDGMENTS
 
-L<Doug Hoyte|https://github.com/hoytech> provided the code for the bitonic, odd-even merge, odd-even transposition, and bubble sort algorithms,
+L<Doug Hoyte|https://github.com/hoytech> provided the code for the bitonic,
+odd-even merge, odd-even transposition, balanced, and bubble sort algorithms,
 and the idea for what became the L<statistics()> method.
+
+L<Morwenn|https://github.com/Morwenn> found documentation errors and networks
+that went into L<Algorithm::Networksort::Best>.
 
 =head1 SEE ALSO
 

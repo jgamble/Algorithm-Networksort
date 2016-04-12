@@ -43,7 +43,8 @@ my $build = $class->new(
 
 	requires => {
 		perl=> '5.10.1',
-		Moose => '0',
+		Moose => '2.16',
+		'Moose::Exporter' => '2.16',
 		'namespace::autoclean' => '0.16',
 	},
 
