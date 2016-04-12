@@ -42,7 +42,7 @@ my %algname = (
 	hibbard => "Hibbard's Sort",
 	bubble => "Bubble Sort",
 	bitonic => "Bitonic Sort",
-	oddeventransposition => "Odd-Even Transposition Sort",
+	oddeventrans => "Odd-Even Transposition Sort",
 	balanced => "Balanced",
 	oddevenmerge => "Batcher's Odd-Even Merge Sort",
 );
@@ -329,7 +329,7 @@ Use a naive bubble-sort/insertion-sort algorithm. Since this algorithm
 produces more comparison pairs than the other algorithms, it is only
 useful for illustrative purposes.
 
-=item 'oddeventransposition'
+=item 'oddeventrans'
 
 Use a naive odd-even transposition sort. This is a primitive sort closely
 related to bubble sort except it is more parallel. Because other algorithms
@@ -341,7 +341,7 @@ This network is described in the 1983 paper "The Balanced Sorting Network"
 by M. Dowd, Y. Perl, M Saks, and L. Rudolph. It is not a particularly
 efficient sort but it has some interesting properties due to the fact
 that it is constructed as a series of successive identical sub-blocks,
-somewhat like with oddeventransposition.
+somewhat like with 'oddeventrans'.
 
 =item 'none'
 
@@ -397,6 +397,7 @@ sub BUILD
 			$self->network($self->comparators);
 			$self->depth(scalar @grouped);
 			$self->network([map { @$_ } @grouped]);
+			$self->title("Unknown $inputs-Inputs Comparator Set") unless ($self->has_title());
 		}
 
 		$self->nwid("nonalgorithmic-" . sprintf("%02d", $inputs)) unless ($self->has_nwid());
@@ -412,7 +413,7 @@ sub BUILD
 	@network = batcher($inputs) if ($alg eq 'batcher');
 	@network = bitonic($inputs) if ($alg eq 'bitonic');
 	@network = bubble($inputs) if ($alg eq 'bubble');
-	@network = oddeventransposition($inputs) if ($alg eq 'oddeventransposition');
+	@network = oddeventransposition($inputs) if ($alg eq 'oddeventrans');
 	@network = balanced($inputs) if ($alg eq 'balanced');
 	@network = oddevenmerge($inputs) if ($alg eq 'oddevenmerge');
 
