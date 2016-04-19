@@ -1,5 +1,15 @@
 Revision history for Perl extension Algorithm::Networksort.
 
+2.01
+	Wed Apr 20 2016
+	- Add nwsrt_title() to the list of default exported functions
+	  in Networksort.pm for consistency with ::Best.pm and for the
+	  programs that call it.
+	- Explain this in documentation.
+	- Also for consistency, =item items are now enclosed in
+	  single quotes in both modules.
+	- Grey background in SVG at begining lightened up.
+
 2.00
 	Tue Apr 12 2016
 	- The module now returns the sorting network as an object.
@@ -14,7 +24,7 @@ Revision history for Perl extension Algorithm::Networksort.
 	  It could be argued that the module should be named
 	  Algorithm::Networksort::Optimal, but 'optimal' has seven
 	  letters and 'best' has four, so 'best' wins.
-	- Doug Hoyte astonishingly provided code for another three
+	- Doug Hoyte provided code for an astonishing three more
 	  algorithms: odd-even merge, odd-even transposition, and balanced.
 	- The example scripts in eg/ have been updated and in some
 	  cases improved.
@@ -67,7 +77,7 @@ Revision history for Perl extension Algorithm::Networksort.
 	  an option to automatically skip long-running tests in
 	  non-development situations.
 	Tue Oct 30 2012
-	- Fall-back algorithm for 'best' option is not Batcher's Merge
+	- Fall-back algorithm for 'best' option is now Batcher's Merge
 	  Exchange algorithm instead of Bose-Nelson.
 	- Checks for $inputs < 2 in the algorithm functions are pointless
 	  since the calling, exported function already checks for it.

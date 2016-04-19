@@ -26,10 +26,10 @@ name: Algorithm-Networksort
 provides:
   Algorithm::Networksort:
     file: lib/Algorithm/Networksort.pm
-    version: '2.00'
+    version: '2.01'
   Algorithm::Networksort::Best:
     file: lib/Algorithm/Networksort/Best.pm
-    version: '1.30'
+    version: '2.01'
 requires:
   Moose: '2.16'
   Moose::Exporter: '2.16'
@@ -38,5 +38,5 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jgamble/Algorithm-Networksort.git
-version: '2.00'
+version: '2.01'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.012'

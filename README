@@ -1,4 +1,4 @@
-Algorithm::Networksort version 2.00
+Algorithm::Networksort version 2.01
 ===================================
 
     "I've got to sort this out. ... There must be a list somewhere
@@ -13,7 +13,7 @@ Algorithm::Networksort version 2.00
     "You haven't done enough sorting, Mr. Cramer."
         The Golden Spiders, by Rex Stout (1953, ch. 13)
 
-With version 2.00, sorting networks are now much easier-to-use
+With version 2.00, sorting networks are now much easier to use
 objects. If your code is not ready for this change, stick with
 version 1.30, which will stay present on CPAN until at least 2017.
 
@@ -47,8 +47,8 @@ in an encapsulated postscript, SVG, or text form.
 INSTALLATION
 
 The usual way.  Unpack the archive:
-	gzip -d Algorithm-Networksort-2.00.tar.gz
-	tar xvf Algorithm-Networksort-2.00.tar
+	gzip -d Algorithm-Networksort-2.01.tar.gz
+	tar xvf Algorithm-Networksort-2.01.tar
 
 Go into the resulting directory, and type:
 	perl Build.PL

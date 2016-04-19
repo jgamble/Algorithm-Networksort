@@ -21,10 +21,10 @@ use integer;
 # and algorithms(), which gives a list of algorithm keys.
 #
 Moose::Exporter->setup_import_methods(
-	as_is => [\&nwsrt_algorithms, \&nwsrt],
+	as_is => [\&nwsrt_algorithms, \&nwsrt_title, \&nwsrt],
 );
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
 
 #
 # Our one use of overload, because default
@@ -155,7 +155,7 @@ Algorithm::Networksort - Create Sorting Networks.
 
 <svg xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink" width="105" height="61" viewbox="0 0 105 61">
-  <rect width="100%" height="100%" fill="#c8c8c8" />
+  <rect width="100%" height="100%" fill="#eeeeee" />
   <defs>
     <g id="I_41c1" style="fill:none; stroke-width:2" >
       <circle style="stroke:#206068" cx="18" cy="0" r="2" />
@@ -233,7 +233,7 @@ postscript (EPS), scalar vector graphics (SVG), or in "ascii art" format.
 
 =head2 Exported Functions
 
-For convenience's sake, there are two exported functions to save typing
+For convenience's sake, there are three exported functions to save typing
 and inconvenient look-ups.
 
 =head3 nwsrt()
@@ -262,11 +262,46 @@ algorithm argument of Algorithm::Networksort->new(), or L<nwsrt()>.
     print "The available keys for the algorithm argument are (",
             join(", ", @alg_keys), ")\n";
 
+Or, for an even less likely example:
+
+    my $inputs = 6;
+
+    for my $al (nwsrt_algorithms())
+    {
+    	my $nw = nwsrt(inputs => $inputs, algorithm => $al);
+    	print $nw->title(), "\n", $nw, "\n";
+    }
+
 =cut
 
 sub nwsrt_algorithms
 {
 	return sort keys %algname;
+}
+
+=head3 nwsrt_title
+
+Return a descriptive title for the network, given an algorithm's key name.
+
+    $title = nwsrt_title($key);
+
+These are the titles for the available algorithms. By themselves, they provide
+a readable list of choices for an interactive program. They are not to be
+confused with a sorting network's title, which may be set by the programmer.
+
+=cut
+
+sub nwsrt_title
+{
+	my $key = shift;
+	
+	unless (exists $algname{$key})
+	{
+		carp "Unknown name '$key'.";
+		return "";
+	}
+
+	return $algname{$key}{title};
 }
 
 =head2 Methods
@@ -1842,35 +1877,35 @@ The parts are named.
 
 =over 4
 
-=item inputbegin
+=item 'inputbegin'
 
 Opening of input line.
 
-=item inputline
+=item 'inputline'
 
 The input line.
 
-=item inputend
+=item 'inputend'
 
 Closing of the input line.
 
-=item compbegin
+=item 'compbegin'
 
 Opening of the comparator.
 
-=item compline
+=item 'compline'
 
 The comparator line.
 
-=item compend
+=item 'compend'
 
 Closing of the comparator line.
 
-=item foreground
+=item 'foreground'
 
 Default color for the graph as a whole.
 
-=item background
+=item 'background'
 
 Color of the background. Currently unimplemented in SVG.
 
@@ -1927,40 +1962,40 @@ SVG measurements are in pixels.
 
 =over 3
 
-=item hz_margin
+=item 'hz_margin
 
 I<Default value: 18.>
 The horizontal spacing between the edges of the graphic and the
 sorting network.
 
-=item hz_sep
+=item 'hz_sep
 
 I<Default value: 12.>
 The spacing separating the horizontal lines (the input lines).
 
-=item indent
+=item 'indent'
 
 I<Default value: 9.>
 The indention between the start of the input lines and the placement of
 the first comparator. The same value spaces the placement of the final
 comparator and the end of the input lines.
 
-=item radius
+=item 'radius'
 
 I<Default value: 2.>
 Radii of the circles used to end the comparator and input lines.
 
-=item stroke_width
+=item 'stroke_width
 
 I<Default value: 2.>
 Width of the lines used to define comparators and input lines.
 
-=item vt_margin
+=item 'vt_margin
 
 I<Default value: 21.>
 The vertical spacing between the edges of the graphic and the sorting network.
 
-=item vt_sep
+=item 'vt_sep
 
 I<Default value: 12.>
 The spacing separating the vertical lines (the comparators).
@@ -1971,55 +2006,55 @@ The spacing separating the vertical lines (the comparators).
 
 =over 3
 
-=item inputbegin
+=item 'inputbegin'
 
 I<Default value: "o-".>
 The starting characters for the input line.
 
-=item inputline
+=item 'inputline'
 
 I<Default value: "---".>
 The characters that make up an input line.
 
-=item inputcompline
+=item 'inputcompline'
 
 I<Default value: "-|-".>
 The characters that make up an input line that has a comparator crossing
 over it.
 
-=item inputend
+=item 'inputend'
 
 I<Default value: "-o\n".>
 The characters that make up the end of an input line.
 
-=item compbegin
+=item 'compbegin'
 
 I<Default value: "-^-".>
 The characters that make up an input line with the starting point of
 a comparator.
 
-=item compend
+=item 'compend'
 
 I<Default value: "-v-".>
 The characters that make up an input line with the end point of
 a comparator.
 
-=item gapbegin
+=item 'gapbegin'
 
 I<Default value: "  " (two spaces).>
 The characters that start the gap between the input lines.
 
-=item gapcompline
+=item 'gapcompline'
 
 I<Default value: " | " (space vertical bar space).>
 The characters that make up the gap with a comparator passing through.
 
-=item gapnone
+=item 'gapnone'
 
 I<Default value: "  " (three spaces).>
 The characters that make up the space between the input lines.
 
-=item gapend
+=item 'gapend'
 
 I<Default value: "  \n" (two spaces and a newline).>
 The characters that end the gap between the input lines.
