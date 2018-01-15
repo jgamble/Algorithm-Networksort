@@ -2236,6 +2236,11 @@ Redwood City, CA, 1998.
 
 =item
 
+Sherenaz W. Al-Haj Baddar and Kenneth E. Batcher,
+Designing Sorting Networks: A New Paradigm, Springer-Verlag, 2011
+
+=item
+
 Kenneth Batcher's web site (L<http://www.cs.kent.edu/~batcher/>) lists
 his publications, including his paper listed above.
 
