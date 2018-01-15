@@ -209,6 +209,19 @@ my %nw_best_by_name = (
 		[12,13], [2,3], [8,11], [4,9], [10,11], [6,7], [5,6], [4,8],
 		[7,9], [4,5], [9,11], [11,12], [3,4], [6,8], [7,10], [9,10],
 		[5,6], [7,8], [8,9], [6,7]]},
+	voorhis16 => {
+		inputs => 16,
+		depth => 9,
+		title => '16-Input Network by David C. Van Voorhis',
+		comparators =>
+		[[0,1], [2,3], [4,5], [6,7], [8,9], [10,11], [12,13], [14,15],
+		[1,3], [5,7], [9,11], [13,15], [0,2], [4,6], [8,10], [12,14],
+		[3,7], [11,15], [2,6], [10,14], [1,5], [9,13], [0,4], [8,12],
+		[7,15], [6,14], [5,13], [4,12], [3,11], [2,10], [1,9], [0,8],
+		[1,2], [3,12], [13,14], [4,8], [7,11], [5,10], [6,9],
+		[2,8], [7,13], [3,9], [5,12], [1,4], [6,10], [11,14],
+		[2,4], [6,8], [10,12], [3,5], [7,9], [11,13],
+		[3,6], [7,10], [5,8], [9,12], [3,4], [5,6], [7,8], [9,10], [11,12]]},
 	senso17 => {
 		inputs => 17,
 		depth => 17,
@@ -872,6 +885,12 @@ L<http://www.cs.brandeis.edu/~hugues/sorting_networks.html>.
 The 18 and 22 input networks found by Sherenaz Waleed Al-Haj Baddar
 are described in her dissertation "Finding Better Sorting Networks" at
 L<http://etd.ohiolink.edu/view.cgi?acc_num=kent1239814529>.
+
+=item
+
+The 16 input network found by David C. Van Voorhis is described in chapter
+5 of Designing Sorting Networks, by Sherenaz W. Al-Haj Baddar and Kenneth E.
+Batcher.
 
 =item
 
