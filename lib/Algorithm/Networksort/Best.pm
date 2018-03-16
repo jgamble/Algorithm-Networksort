@@ -209,7 +209,7 @@ my %nw_best_by_name = (
 		[12,13], [2,3], [8,11], [4,9], [10,11], [6,7], [5,6], [4,8],
 		[7,9], [4,5], [9,11], [11,12], [3,4], [6,8], [7,10], [9,10],
 		[5,6], [7,8], [8,9], [6,7]]},
-	voorhis16 => {
+	vanvoorhis16 => {
 		inputs => 16,
 		depth => 9,
 		title => '16-Input Network by David C. Van Voorhis',
@@ -487,7 +487,7 @@ INIT
     my $inputs = 9;
 
     #
-    # First find if any networks exist for the size you want.
+    # First find if any networks exist for the input size.
     #
     my @nwkeys = nw_best_names($inputs);
 
@@ -540,7 +540,7 @@ V. K. Valsalam and R. Miikkulaainen.
 
 =item 'waksman10'
 
-a 10-input network of depth 9 found by A. Waksman.
+A 10-input network of depth 9 found by A. Waksman.
 
 =item 'senso10'
 
@@ -638,6 +638,10 @@ A 16-input network of depth 10 found by M. W. Green.
 
 A 16-input network of depth 10 found using the SENSO program by
 V. K. Valsalam and R. Miikkulaainen.
+
+=item 'vanvoorhis16'
+
+From the book B<Designing Sorting Networks> (see L<Non-algorithmic discoveries> below).
 
 =back
 
@@ -801,11 +805,16 @@ An unlikely example:
 
     my $inputs = 12;
 
-    for my $name (nwsrt_best_names())
+    for my $name (nwsrt_best_names($inputs))
     {
-    	my $nw = nwsrt_best(inputs => $inputs, name => $name);
+    	my $nw = nwsrt_best(name => $name);
     	print $nw->title(), "\n", $nw, "\n";
     }
+
+To get the list of all available names (regardless of input size), simply
+call the function with no argument:
+
+    my @names = nwsrt_best_names();
 
 =cut
 
@@ -889,7 +898,7 @@ L<http://etd.ohiolink.edu/view.cgi?acc_num=kent1239814529>.
 =item
 
 The 16 input network found by David C. Van Voorhis is described in chapter
-5 of Designing Sorting Networks, by Sherenaz W. Al-Haj Baddar and Kenneth E.
+5 of B<Designing Sorting Networks>, by Sherenaz W. Al-Haj Baddar and Kenneth E.
 Batcher.
 
 =item

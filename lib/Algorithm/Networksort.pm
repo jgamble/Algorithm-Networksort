@@ -2555,14 +2555,14 @@ T. H. Cormen, E. E. Leiserson, R. L. Rivest, C. Stein, Introduction to Algorithm
 
 =item
 
-Donald E. Knuth, The Art of Computer Programming, Vol. 3: (2nd ed.)
-Sorting and Searching, Addison Wesley Longman Publishing Co., Inc.,
+Donald E. Knuth, B<The Art of Computer Programming, Vol. 3:
+Sorting and Searching> (2nd ed.), Addison Wesley Longman Publishing Co., Inc.,
 Redwood City, CA, 1998.
 
 =item
 
 Sherenaz W. Al-Haj Baddar and Kenneth E. Batcher,
-Designing Sorting Networks: A New Paradigm, Springer-Verlag, 2011
+B<Designing Sorting Networks: A New Paradigm>, Springer-Verlag, 2011
 
 =item
 
