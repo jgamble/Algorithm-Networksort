@@ -13,11 +13,11 @@ our $author_testing = $ENV{AUTHOR_TESTING};
 
 #
 # Spare the CPAN testers from testing networks greater
-# than 16 inputs.
+# than 15 inputs.
 #
 unless ($author_testing)
 {
-	@names = grep{/^[a-z]+[0-9]$|^[a-z]+1[0-6]$/} @names;
+	@names = grep{/^[a-z]+0[0-9]$|^[a-z]+1[0-5]$/} @names;
 }
 
 diag("Networks to test: " . join(", ", @names));
