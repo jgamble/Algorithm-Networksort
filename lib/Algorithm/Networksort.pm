@@ -10,10 +10,11 @@ use Carp;
 use integer;
 
 #
-# Three # for "I am here" messages, four # for variable dumps.
-# Five # for sort tracking.
+# Three # for "I am here" messages,
+# four # for (non-array) variable dumps,
+# five # for array dumps and sort tracking.
 #
-#use Smart::Comments ('####');
+use Smart::Comments ('####');
 
 #
 # Export a couple of convenience functions:
@@ -500,7 +501,7 @@ sub BUILD
 	@grouped = $self->group();
 
 	#
-	#### @grouped
+	###### @grouped
 	#
 	$self->depth(scalar @grouped);
 	$self->network([map { @$_ } @grouped]);
@@ -580,7 +581,7 @@ sub hibbard
 		# comparator pair.
 		#
 		### hibbard() top of loop:
-		#### @comparators
+		##### @comparators
 		#
 		push @comparators, [$x, $y];
 
@@ -700,7 +701,7 @@ sub bn_split
 
 	#
 	### bn_split() returns
-	#### @comparators
+	##### @comparators
 	#
 	return @comparators;
 }
@@ -753,7 +754,7 @@ sub bn_merge
 
 	#
 	### bn_merge() returns
-	#### @comparators
+	##### @comparators
 	#
 	return @comparators;
 }
@@ -1081,8 +1082,8 @@ sub sort
 
 	#
 	### sort():
-	#### $network
-	#### $array
+	##### $network
+	##### $array
 	#
 
 	#
@@ -1101,7 +1102,7 @@ sub sort
 		}
 
 		#
-		##### @$array
+		###### @$array
 		#
 	}
 
@@ -1146,14 +1147,34 @@ sub statistics
 
 The network object by default prints itself in a grouped format; that is
 
-    my $nw = nwsrt(inputs => 4, algorithm => 'bosenelson');
-    print $nw;
+    my $nw = nwsrt(inputs => 8, algorithm => 'bosenelson');
+    print $nw . "\n";
 
 Will result in the output
 
-    [[0,1], [2,3],
-    [0,2], [1,3],
-    [1,2]]
+    [[0,1], [2,3], [4,5], [6,7],
+    [0,2], [1,3], [4,6], [5,7],
+    [1,2], [5,6], [0,4], [3,7],
+    [1,5], [2,6],
+    [1,4], [3,6],
+    [2,4], [3,5],
+    [3,4]]
+
+If you had shifted the array index by one using L<index_base()>:
+
+    my $nw = nwsrt(inputs => 8, algorithm => 'bosenelson');
+    $nw->index_base([1 .. 8]);
+    print $nw . "\n";
+
+This would have resulted in the output
+
+    [[1,2], [3,4], [5,6], [7,8],
+    [1,3], [2,4], [5,7], [6,8],
+    [2,3], [6,7], [1,5], [4,8],
+    [2,6], [3,7],
+    [2,5], [4,7],
+    [3,5], [4,6],
+    [4,5]]
 
 For a wider variety of outputs, use C<formats()> and C<index_base()> as
 described below.
@@ -1184,7 +1205,7 @@ sub _dflt_formatted
 
 	#
 	# Got comparators?
-	#### $network
+	##### $network
 	#
 	if (scalar @$network == 0)
 	{
@@ -1202,8 +1223,7 @@ sub _dflt_formatted
 		$string .= "[" . join(",", @$cmptr) . "], ";
 	}
 
-	chop $string;
-	chop $string;
+	chop $string;	# Remove the trailing space, but not the comma.
 
 	return $string;
 }
@@ -1211,7 +1231,7 @@ sub _dflt_formatted
 #
 # _stringify
 #
-# Show a nicely formatted sorting network.
+# Show a sorting network formatted by group (using _dflt_formatted() above).
 #
 sub _stringify
 {
@@ -1223,7 +1243,7 @@ sub _stringify
 	{
 		$string .= $self->_dflt_formatted($grp) . "\n";
 	}
-	substr($string, -1, 1) = ']';    # Overwrite the trailing "\n".
+	substr($string, -2) = ']';    # Overwrite the trailing ",\n".
 	return $string;
 }
 
@@ -1247,7 +1267,7 @@ B<Example 0: you want a string in the default format.>
 B<Example 1: you want the output to look like the default format, but
 one-based instead of zero-based.>
 
-    $nw->input_base([1..$inputs]);
+    $nw->index_base([1..$inputs]);
     print $nw->formatted();
 
 B<Example 2: you want a simple list of SWAP macros.>
@@ -1257,7 +1277,7 @@ B<Example 2: you want a simple list of SWAP macros.>
 
 B<Example 3: as with example 2, but the SWAP values need to be one-based instead of zero-based.>
 
-    $nw->input_base([1..$inputs]);
+    $nw->index_base([1..$inputs]);
     $nw->formats([ "SWAP(%d, %d);\n" ]);
     print $nw->formatted();
 
@@ -1269,7 +1289,7 @@ B<Example 4: you want a series of comparison and swap statements.>
 
 B<Example 5: you want the default format to use letters, not numbers.>
 
-    $nw->input_base( [('a'..'z')[0..$inputs]] );
+    $nw->index_base( [('a'..'z')[0..$inputs]] );
     $nw->formats([ "[%s,%s]," ]);      # Note that we're using the string flag.
 
     my $string = '[' . $nw->formatted();
@@ -1283,10 +1303,11 @@ sub formatted
 {
 	my $self = shift;
 	my $network = $self->network();
+	my $string = '';
 
 	#
 	# Got comparators?
-	#### $network
+	##### $network
 	#
 	if (scalar @$network == 0)
 	{
@@ -1296,14 +1317,17 @@ sub formatted
 
 	#
 	# Got formats?
+	# If not, produce a single string with no ending newline.
 	#
 	my(@formats) = $self->formats? @{ $self->formats() }: ();
 	unless (scalar @formats)
 	{
-		return '[' . $self->_dflt_formatted($network) . ']';
+		$string = $self->_dflt_formatted($network);
+		chop $string;		# Remove trailing comma
+
+		return '[' . $string . ']';
 	}
 
-	my $string = '';
 	my $index_base = $self->index_base();
 
 	for my $cmptr (@$network)
@@ -1495,6 +1519,10 @@ sub colorswithdefaults
 	my %clrset = map{$_ => ($colorset{$_} // $colorset{foreground} // '#000')}
 		@keylist;
 	$clrset{background} = $colorset{background};
+
+	#
+	#### colorset after defaults are set: %clrset
+	#
 	return %clrset;
 }
 
@@ -1516,7 +1544,7 @@ sub ismonotone
 #
 sub psrgbcolor
 {
-	my $color = $_[0] // '#000';
+	my $color = $_[0] // '000';
 
 	#
 	# A postscript user might already have this in 'rr gg bb' format,
@@ -1528,23 +1556,21 @@ sub psrgbcolor
 	if ($color =~ /[^0-9a-fA-F]/)
 	{
 		carp "Color '$color' not in RGB form";
-		$color = "00 00 00";
+		$color = "000";
+	}
+
+	if (length $color == 3)
+	{
+		$color =~ s/(.)(.)(.)/$1$1 $2$2 $3$3/;
+	}
+	elsif (length $color == 6)
+	{
+		$color =~ s/(..)(..)(..)/$1 $2 $3/;
 	}
 	else
 	{
-		if (length $color == 3)
-		{
-			$color =~ s/(.)(.)(.)/$1$1 $2$2 $3$3/;
-		}
-		elsif (length $color == 6)
-		{
-			$color =~ s/(..)(..)(..)/$1 $2 $3/;
-		}
-		else
-		{
-			carp "Color '$color' not in six or three-digit RGB form.";
-			$color = "00 00 00";
-		}
+		carp "Color '$color' not in six or three-digit RGB form.";
+		$color = "00 00 00";
 	}
 
 	return $color;
