@@ -1641,29 +1641,23 @@ sub graph_eps
 	qq(/draw-inputline {\n    vcoord exch get leftmargin exch\n) .
 	qq(    dup rightmargin exch % x1 y1 x2 y1\n\n);
 
+	$string .= qq(    newpath );
+	$string .= qq(    4 copy ) if ($i_radius > 0);
+	$string .= qq($clrset{inputline} ) unless ($monotone);
+
+	$string .= q(    moveto lineto);
+
 	if ($i_radius > 0)
 	{
 		if ($monotone)
 		{
-			$string .= qq(    newpath 4 copy moveto lineto ) .
-				qq($i_radius 0 360 arc fill newpath $i_radius 0 360 arc fill);
+			$string .= qq(    newpath moveto $i_radius 0 360 arc fill ) .
+				qq(newpath moveto $i_radius 0 360 arc fill);
 		}
 		else
 		{
-			$string .= qq(    newpath $clrset{inputline} 4 copy moveto lineto ) .
-				qq($clrset{inputbegin} $i_radius 0 360 arc fill newpath ) .
-				qq($clrset{inputend} $i_radius 0 360 arc fill);
-		}
-	}
-	else
-	{
-		if ($monotone)
-		{
-			$string .= q(    newpath moveto lineto);
-		}
-		else
-		{
-			$string .= qq(    newpath $clrset{inputline} moveto lineto);
+			$string .= qq($clrset{inputbegin} $i_radius 0 360 arc fill ) .
+				qq(newpath moveto $clrset{inputend} $i_radius 0 360 arc fill);
 		}
 	}
 
