@@ -1641,22 +1641,24 @@ sub graph_eps
 	qq(    dup rightmargin exch % x1 y1 x2 y1\n\n);
 
 	$string .= qq(    newpath );
-	$string .= qq(    4 copy ) if ($i_radius > 0);
+	$string .= qq(4 copy ) if ($i_radius > 0);
 	$string .= qq($clrset{inputline} ) unless ($monotone);
 
-	$string .= q(    moveto lineto);
+	$string .= q(moveto lineto);
 
 	if ($i_radius > 0)
 	{
+		$string .= "\n    ";
+
 		if ($monotone)
 		{
-			$string .= qq(    newpath moveto $i_radius 0 360 arc fill ) .
+			$string .= qq(newpath moveto $i_radius 0 360 arc fill ) .
 				qq(newpath moveto $i_radius 0 360 arc fill);
 		}
 		else
 		{
-			$string .= qq($clrset{inputbegin} $i_radius 0 360 arc fill ) .
-				qq(newpath moveto $clrset{inputend} $i_radius 0 360 arc fill);
+			$string .= qq(newpath $clrset{inputbegin} moveto $i_radius 0 360 arc fill ) .
+				qq(newpath $clrset{inputend} moveto $i_radius 0 360 arc fill);
 		}
 	}
 
@@ -1668,35 +1670,31 @@ sub graph_eps
 	$string .= qq(%\n% column inputline1 inputline2 draw-comparatorline\n%\n) .
 		qq(/draw-comparatorline {\n) .
     		qq(    vcoord exch get 3 1 roll vcoord exch get\n) .
-    		qq(    3 1 roll hcoord exch get 3 1 roll 2 index exch % x1 y1 x1 y2\n) .
-		q(    newpath );
+    		qq(    3 1 roll hcoord exch get 3 1 roll 2 index exch % x1 y1 x1 y2\n);
 
-	#
-	# Double the coords if we're also doing the endpoint circles.
-	#
-	$string .= q(4 copy ) if ($c_radius > 0);
-
-	#
-	# Set the line color (if we have to) and draw the line.
-	#
+	$string .= qq(    newpath );
+	$string .= qq(4 copy ) if ($c_radius > 0);
 	$string .= qq($clrset{compline}) unless ($monotone);
-	$string .= q(moveto lineto gsave stroke grestore );
+
+	$string .= q(moveto lineto);
 
 	if ($c_radius > 0)
 	{
+		$string .= "\n    ";
+
 		if ($monotone)
 		{
-			$string .= qq(moveto $c_radius 0 360 arc gsave stroke grestore fill) .
-				qq( moveto $c_radius 0 360 arc gsave stroke grestore fill);
+			$string .= qq(newpath moveto $c_radius 0 360 arc fill) .
+				qq( newpath moveto $c_radius 0 360 arc fill);
 		}
 		else
 		{
-			$string .= qq(moveto $clrset{compbegin} $c_radius 0 360 arc gsave stroke grestore fill) .
-				qq( moveto $clrset{compend} $c_radius 0 360 arc gsave stroke grestore fill);
+			$string .= qq(newpath $clrset{compbegin} moveto $c_radius 0 360 arc fill) .
+				qq( newpath $clrset{compend} moveto $c_radius 0 360 arc fill);
 		}
 	}
 
-	$string .= qq(\n} bind def\n);
+	$string .= qq( stroke\n} bind def\n);
 
 	#
 	# Save the current graphics state, then change the drawing
