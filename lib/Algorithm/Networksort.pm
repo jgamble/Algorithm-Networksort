@@ -7,7 +7,6 @@ use Moose::Exporter;
 use namespace::autoclean;
 
 use Carp;
-use integer;
 
 #
 # Three # for "I am here" messages,
@@ -692,7 +691,7 @@ sub bn_split
 
 	if ($length >= 2)
 	{
-		my $mid = $length/2;
+		my $mid = $length >> 1;
 
 		push @comparators, bn_split($i, $mid);
 		push @comparators, bn_split($i + $mid, $length - $mid);
@@ -744,8 +743,8 @@ sub bn_merge
 	}
 	else
 	{
-		my $i_mid = $length_i/2;
-		my $j_mid = ($length_i & 1)? $length_j/2: ($length_j + 1)/2;
+		my $i_mid = int($length_i/2);
+		my $j_mid = int(($length_i & 1)? $length_j/2: ($length_j + 1)/2);
 
 		push @comparators, bn_merge($i, $i_mid, $j, $j_mid);
 		push @comparators, bn_merge($i + $i_mid, $length_i - $i_mid, $j + $j_mid, $length_j - $j_mid);
@@ -827,7 +826,7 @@ sub bitonic
 		my ($lo, $n, $dir) = @_;
 
 		if ($n > 1) {
-			my $m = $n/2;
+			my $m = $n >> 1;
 			$sort->($lo, $m, !$dir);
 			$sort->($lo + $m, $n - $m, $dir);
 			$merge->($lo, $n, $dir);
@@ -958,11 +957,11 @@ sub balanced
 
 	for (1 .. $t)
 	{
-		for (my $curr = 2**($t); $curr > 1; $curr /= 2)
+		for (my $curr = 1 << $t; $curr > 1; $curr >>= 1)
 		{
-			for (my $i = 0; $i < 2**$t; $i += $curr)
+			for (my $i = 0; $i < (1 << $t); $i += $curr)
 			{
-				for (my $j = 0; $j < $curr/2; $j++)
+				for (my $j = 0; $j < int($curr/2); $j++)
 				{
 					my $wire1 = $i+$j;
 					my $wire2 = $i+$curr-$j-1;
@@ -1039,7 +1038,7 @@ sub oddevenmerge
 		}
 	};
 
-	$sort->(0, 2**$t);
+	$sort->(0, 1 << $t);
 
 	return @network;
 }
