@@ -13,7 +13,7 @@ use Carp;
 # four # for (non-array) variable dumps,
 # five # for array dumps and sort tracking.
 #
-use Smart::Comments ('####');
+#use Smart::Comments ('###');
 
 #
 # Export a couple of convenience functions:
@@ -37,13 +37,13 @@ use overload
 # Names for the algorithm keys.
 #
 my %algname = (
-	bosenelson => "Bose-Nelson Sort",
-	batcher => "Batcher's Mergesort",
-	hibbard => "Hibbard's Sort",
-	bubble => "Bubble Sort",
-	bitonic => "Bitonic Sort",
-	oddeventrans => "Odd-Even Transposition Sort",
 	balanced => "Balanced",
+	batcher => "Batcher's Mergesort",
+	bitonic => "Bitonic Sort",
+	bosenelson => "Bose-Nelson Sort",
+	bubble => "Bubble Sort",
+	hibbard => "Hibbard's Sort",
+	oddeventrans => "Odd-Even Transposition Sort",
 	oddevenmerge => "Batcher's Odd-Even Merge Sort",
 );
 
@@ -1356,13 +1356,19 @@ that represents parallel operations of comparators. Its values may be:
 
 =item 'graph'
 
-Group the comnparators as parallel as possible for graphing.
+Group the comparators as parallel as possible for graphing.
 
 =item 'parallel'
 
 Arrange the sequence in parallel so that it has a minimum depth. This,
 after flattening the lists into a single list again, is what is used to
 produce the sequence in L<network()>.
+
+=item I<number>
+
+Arrange the comparators every I<number> count. This is for simple
+printing of the comparators, without any grouping for graphing or
+maximum parallelization.
 
 =back
 
@@ -1539,14 +1545,14 @@ sub ismonotone
 }
 
 #
-# For the postscript output. Change, for example, '#723' to '77 22 33'.
+# For the postscript setrgbcolor operator.
 #
 sub psrgbcolor
 {
 	my $color = $_[0] // '000';
 
 	#
-	# A postscript user might already have this in 'rr gg bb' format,
+	# A postscript user might have this in an 'rr gg bb' format,
 	# or not bother with the '#'.
 	#
 	$color =~ s/ //g;
@@ -1554,7 +1560,7 @@ sub psrgbcolor
 
 	if ($color =~ /[^0-9a-fA-F]/)
 	{
-		carp "Color '$color' not in RGB form";
+		carp "Color '$color' is not in six or three hexadecimal digit RGB form.";
 		$color = "000";
 	}
 
@@ -1568,11 +1574,11 @@ sub psrgbcolor
 	}
 	else
 	{
-		carp "Color '$color' not in six or three-digit RGB form.";
-		$color = "00 00 00";
+		carp "Color '$color' is not in six or three hexadecimal digit RGB form.";
+		$color = "0 0 0";
 	}
 
-	return $color;
+	return join(" ", map{hex()/256} split(/ /, $color));
 }
 
 =head2 Methods For Graphing
@@ -1626,12 +1632,12 @@ sub graph_eps
 		qq(\n%%Title: ) . $self->title() .
 		qq(\n%%Pages: 1\n%%EndComments\n%%Page: 1 1\n) .
 
-		"/vcoord [" .
-		join("\n    ", semijoin(' ', 16, @vcoord)) . "] def\n" .
-		"/hcoord [" .
-		join("\n    ", semijoin(' ', 16, @hcoord)) . "] def\n\n" .
-		"/leftmargin $grset{hz_margin} def\n" .
-		"/rightmargin " . ($xbound - $grset{hz_margin}) . " def\n\n";
+		qq(/vcoord [) .
+		join("\n    ", semijoin(' ', 16, @vcoord)) . qq(] def\n\n) .
+		qq(/hcoord [) .
+		join("\n    ", semijoin(' ', 16, @hcoord)) . qq(] def\n\n) .
+		qq(/leftmargin $grset{hz_margin} def\n) .
+		qq(/rightmargin ) . ($xbound - $grset{hz_margin}) . qq( def\n\n);
 
 	#
 	# Define the input line procedure.
@@ -1640,88 +1646,86 @@ sub graph_eps
 	qq(/draw-inputline {\n    vcoord exch get leftmargin exch\n) .
 	qq(    dup rightmargin exch % x1 y1 x2 y1\n\n);
 
-	$string .= qq(    newpath );
-	$string .= qq(4 copy ) if ($i_radius > 0);
-	$string .= qq($clrset{inputline} ) unless ($monotone);
+	$string .= qq(    4 copy\n) if ($i_radius > 0);
+	$string .= qq(    $clrset{inputline}\n) unless ($monotone);
 
-	$string .= q(moveto lineto);
+	$string .= qq(    newpath moveto lineto stroke\n);
 
 	if ($i_radius > 0)
 	{
-		$string .= "\n    ";
-
 		if ($monotone)
 		{
-			$string .= qq(newpath moveto $i_radius 0 360 arc fill ) .
-				qq(newpath moveto $i_radius 0 360 arc fill);
+			$string .= qq(    newpath 2 copy moveto $i_radius 0 360 arc fill ) .
+				qq(newpath 2 copy moveto $i_radius 0 360 arc fill\n);
 		}
 		else
 		{
-			$string .= qq(newpath $clrset{inputbegin} moveto $i_radius 0 360 arc fill ) .
-				qq(newpath $clrset{inputend} moveto $i_radius 0 360 arc fill);
+			$string .= qq(    $clrset{inputend}\n) .
+				qq(    newpath 2 copy moveto $i_radius 0 360 arc fill\n) .
+				qq(    $clrset{inputbegin}\n) .
+				qq(    newpath 2 copy moveto $i_radius 0 360 arc fill\n);
 		}
 	}
 
-	$string .= qq( stroke\n} bind def\n);
+	$string .= qq(} bind def\n\n);
 
 	#
 	# Define the comparator procedure.
 	#
 	$string .= qq(%\n% column inputline1 inputline2 draw-comparatorline\n%\n) .
 		qq(/draw-comparatorline {\n) .
-    		qq(    vcoord exch get 3 1 roll vcoord exch get\n) .
-    		qq(    3 1 roll hcoord exch get 3 1 roll 2 index exch % x1 y1 x1 y2\n);
+    		qq(    vcoord exch get 3 1 roll vcoord exch get 3 1 roll\n) .
+    		qq(    hcoord exch get 3 1 roll 2 index exch % now x1 y1 x1 y2\n\n);
 
-	$string .= qq(    newpath );
-	$string .= qq(4 copy ) if ($c_radius > 0);
-	$string .= qq($clrset{compline}) unless ($monotone);
+	$string .= qq(    4 copy\n) if ($c_radius > 0);
+	$string .= qq(    $clrset{compline}\n) unless ($monotone);
 
-	$string .= q(moveto lineto);
+	$string .= qq(    newpath moveto lineto stroke\n);
 
 	if ($c_radius > 0)
 	{
-		$string .= "\n    ";
-
 		if ($monotone)
 		{
-			$string .= qq(newpath moveto $c_radius 0 360 arc fill) .
-				qq( newpath moveto $c_radius 0 360 arc fill);
+			$string .= qq(    newpath 2 copy moveto $c_radius 0 360 arc fill ) .
+				qq(newpath 2 copy moveto $c_radius 0 360 arc fill\n);
 		}
 		else
 		{
-			$string .= qq(newpath $clrset{compbegin} moveto $c_radius 0 360 arc fill) .
-				qq( newpath $clrset{compend} moveto $c_radius 0 360 arc fill);
+			$string .= qq(    $clrset{compend}\n) .
+				qq(    newpath 2 copy moveto $c_radius 0 360 arc fill\n) .
+				qq(    $clrset{compbegin}\n) .
+				qq(    newpath 2 copy moveto $c_radius 0 360 arc fill\n);
 		}
 	}
 
-	$string .= qq( stroke\n} bind def\n);
+	$string .= qq(} bind def\n\n);
 
 	#
 	# Save the current graphics state, then change the drawing
 	# coordinates (from (0,0) = lower left to (0,0) = upper left),
 	# and the color if we're drawing in a single color.
 	#
-	$string .= "gsave\n0 $ybound translate\n1 -1 scale\n";
-	$string .= "$clrset{foreground}\n" if ($monotone);
+	$string .= qq(gsave\n0 $ybound translate\n1 -1 scale\n);
+	$string .= qq($clrset{foreground}\n) if ($monotone);
 
-	if (defined $colorset{background})
+	if (defined $clrset{background})
 	{
-		$string .= "\n gsave\n $colorset{background}\n0 0 moveto";
-		$string .=" 0 $ybound moveto $xbound $ybound moveto $xbound 0 moveto 0 0 moveto";
-		$string .= "\nclosepath fill\ngrestore\n;"
+		$string .= qq(\ngsave $clrset{background}\n);
+		$string .= qq(0 0 moveto 0 $ybound lineto $xbound $ybound lineto $xbound 0 lineto closepath);
+		$string .= qq(\nfill grestore\n);
 	}
 
 	#
 	# Draw the input lines.
 	#
-	$string .= "\n%\n% Draw the input lines.\n%\n$grset{inputline} setlinewidth\n" .
-		"0 1 " . ($inputs-1) . " {draw-inputline} for\n";
+	$string .= qq(\n%\n% Draw the input lines.\n%\n$grset{inputline} setlinewidth\n) .
+		qq(0 1 ) . ($inputs-1) . qq( {draw-inputline} for\n);
 
 	#
 	# Draw our comparators.
 	# Each member of a group of comparators is drawn in the same column.
 	#
-	$string .= "\n%\n% Draw the comparator lines.\n%\n$grset{compline} setlinewidth\n";
+	$string .= qq(\n%\n% Draw the comparator lines.\n%\n$grset{compline} setlinewidth\n);
 	my $hidx = 0;
 	for my $group (@node_stack)
 	{
@@ -1732,7 +1736,7 @@ sub graph_eps
 		$hidx++;
 	}
 
-	$string .= "showpage\ngrestore\n% End of the EPS graph.";
+	$string .= qq(showpage\ngrestore\n% End of the EPS graph.\n);
 	return $string;
 }
 
