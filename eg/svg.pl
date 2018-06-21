@@ -9,11 +9,11 @@ use warnings;
 # These are the default settings.
 #
 my %graphset = (
-	hz_margin => 18,
+	hz_margin => 12,
 	hz_sep => 12,
-	indent => 9,
+	indent => 12,
 	inputline => 2,
-	inputradius => 2,
+	inputradius => 0,
 	compline => 2,
 	compradius => 2,
 	vt_margin => 21,
@@ -32,14 +32,15 @@ my %colorset = (compbegin => undef,
 my $alg = 'bosenelson';
 my($nw, $best);
 
-GetOptions('compbegin=s' => \$colorset{compbegin},
-	'compend=s' => \$colorset{compend},
-	'compline=s' => \$colorset{compline},
-	'inputbegin=s' => \$colorset{inputbegin},
-	'inputend=s' => \$colorset{inputend},
-	'inputline=s'=> \$colorset{inputline},
-	'foreground=s' => \$colorset{foreground},
-	'background=s' => \$colorset{background},
+GetOptions('co_cb=s' => \$colorset{compbegin},
+	'co_ce=s' => \$colorset{compend},
+	'co_cl=s' => \$colorset{compline},
+	'co_ib=s' => \$colorset{inputbegin},
+	'co_ie=s' => \$colorset{inputend},
+	'co_il=s'=> \$colorset{inputline},
+	'co_fg=s' => \$colorset{foreground},
+	'co_bg=s' => \$colorset{background},
+#
 	'hz_margin=i' => \$graphset{hz_margin},
 	'hz_sep=i' => \$graphset{hz_sep},
 	'indent=i' => \$graphset{indent},
@@ -64,6 +65,7 @@ else
 	$nw = nwsrt(inputs => $inputs, algorithm => $alg);
 }
 
+print STDERR $nw->title(), "\n";
 $nw->colorsettings(%colorset);
 $nw->graphsettings(%graphset);
 
