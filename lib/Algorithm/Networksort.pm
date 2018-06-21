@@ -24,7 +24,7 @@ Moose::Exporter->setup_import_methods(
 	as_is => [\&nwsrt_algorithms, \&nwsrt_title, \&nwsrt],
 );
 
-our $VERSION = '2.01';
+our $VERSION = '2.02';
 
 #
 # Our one use of overload, because default
@@ -162,32 +162,33 @@ Algorithm::Networksort - Create Sorting Networks.
 =begin html
 
 <svg xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink" width="157" height="120" viewbox="0 0 157 120">
+     xmlns:xlink="http://www.w3.org/1999/xlink" width="90" height="84" viewbox="0 0 90 84">
   <title>Bose-Nelson Sort for N = 4</title>
   <defs>
-    <g id="I_5649" style="stroke-width:2; fill:#000; stroke:#000" >
-      <line  x1="18" y1="0" x2="139" y2="0" />
+    <g id="I_1c13" style="stroke-width:2; fill:#000; stroke:#000" >
+      <line  x1="12" y1="0" x2="78" y2="0" />
     </g>
-    <g id="C1_5649" style="stroke-width:3;fill:#000; stroke:#000" >
-      <line  x1="0" y1="0" x2="0" y2="26" />
-      <circle  cx="0" cy="0" r="3" /> <circle  cx="0" cy="26" r="3" />
+
+    <g id="C1_1c13" style="stroke-width:2;fill:#000; stroke:#000" >
+      <line  x1="0" y1="0" x2="0" y2="14" />
+      <circle  cx="0" cy="0" r="2" /> <circle  cx="0" cy="14" r="2" />
     </g>
-    <g id="C2_5649" style="stroke-width:3;fill:#000; stroke:#000" >
-      <line  x1="0" y1="0" x2="0" y2="52" />
-      <circle  cx="0" cy="0" r="3" /> <circle  cx="0" cy="52" r="3" />
+    <g id="C2_1c13" style="stroke-width:2;fill:#000; stroke:#000" >
+      <line  x1="0" y1="0" x2="0" y2="28" />
+      <circle  cx="0" cy="0" r="2" /> <circle  cx="0" cy="28" r="2" />
     </g>
   </defs>
 
-  <g id="bosenelson04_5649">
-    <rect width="100%" height="100%" style="fill:#eee" />
-    <use xlink:href="#I_5649" y="21" /> <use xlink:href="#I_5649" y="47" />
-    <use xlink:href="#I_5649" y="73" /> <use xlink:href="#I_5649" y="99" />
+  <g id="bosenelson04_1c13">
+    <use xlink:href="#I_1c13" y="21" /> <use xlink:href="#I_1c13" y="35" />
+    <use xlink:href="#I_1c13" y="49" /> <use xlink:href="#I_1c13" y="63" />
 
-    <use xlink:href="#C1_5649" x="38" y="21" /> <use xlink:href="#C1_5649" x="38" y="73" />
-    <use xlink:href="#C2_5649" x="65" y="21" /> <use xlink:href="#C2_5649" x="92" y="47" />
-    <use xlink:href="#C1_5649" x="119" y="47" />
+    <use xlink:href="#C1_1c13" x="24" y="21" /> <use xlink:href="#C1_1c13" x="24" y="49" />
+    <use xlink:href="#C2_1c13" x="38" y="21" /> <use xlink:href="#C2_1c13" x="52" y="35" />
+    <use xlink:href="#C1_1c13" x="66" y="35" />
   </g>
 </svg>
+
 
 <p>Bose-Nelson sorting network, inputs = 4, drawn as a Knuth diagram.</p>
 
@@ -222,14 +223,14 @@ Algorithm::Networksort - Create Sorting Networks.
         $nw->graph_text(), "\n";
 
     #
-    # Change the sizes and add a background color.
     # Create an SVG image of the Knuth diagram.
+    # Set the diagram sizes.
     #
-    $nw->graphsettings(vt_margin => 21, hz_margin => 18, indent => 20,
-        vt_sep => 24, hz_sep=>24,
-        compradius => 3, compline => 3, inputradius => 0);
-
-    $nw->colorsettings(background => "#eee");
+    $nw->graphsettings(indent => 12,
+        hz_margin => 12, hz_sep=>12,
+        vt_margin => 21, vt_sep => 12,
+        compradius => 2, compline => 2,
+        inputradius => 0, inputline => 2);
 
     print $nw->graph_svg();
 
@@ -561,9 +562,7 @@ sub hibbard
 	# $t = ceiling(log2($inputs - 1)); but we'll
 	# find it using the length of the bitstring.
 	#
-	my $t = unpack("B32", pack("N", $inputs - 1));
-	$t =~ s/^0+//;
-	$t = length $t;
+	my $t = length sprintf("%b", $inputs - 1);
 
 	my $lastbit = 1 << $t;
 
@@ -775,9 +774,7 @@ sub batcher
 	# $t = ceiling(log2($inputs)); but we'll
 	# find it using the length of the bitstring.
 	#
-	my $t = unpack("B32", pack("N", $inputs));
-	$t =~ s/^0+//;
-	$t = length $t;
+	my $t = length sprintf("%b", $inputs);
 
 	my $p = 1 << ($t -1);
 
@@ -841,9 +838,7 @@ sub bitonic
 			# $t = ceiling(log2($n - 1)); but we'll
 			# find it using the length of the bitstring.
 			#
-			my $t = unpack("B32", pack("N", $n - 1));
-			$t =~ s/^0+//;
-			$t = length $t;
+			my $t = length sprintf("%b", $n - 1);
 
 			my $m = 1 << ($t - 1);
 
@@ -951,9 +946,7 @@ sub balanced
 	# $t = ceiling(log2($inputs - 1)); but we'll
 	# find it using the length of the bitstring.
 	#
-	my $t = unpack("B32", pack("N", $inputs - 1));
-	$t =~ s/^0+//;
-	$t = length $t;
+	my $t = length sprintf("%b", $inputs - 1);
 
 	for (1 .. $t)
 	{
@@ -991,9 +984,7 @@ sub oddevenmerge
 	# $t = ceiling(log2($inputs - 1)); but we'll
 	# find it using the length of the bitstring.
 	#
-	my $t = unpack("B32", pack("N", $inputs - 1));
-	$t =~ s/^0+//;
-	$t = length $t;
+	my $t = length sprintf("%b", $inputs - 1);
 
 	my ($add_elem, $sort, $merge);
 

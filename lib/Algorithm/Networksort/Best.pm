@@ -31,7 +31,7 @@ use warnings;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '2.01';
+our $VERSION = '2.02';
 
 #
 # The hashes represent each network, with a short, hopefully descriptive, key.
@@ -525,7 +525,9 @@ The current networks are:
 
 =item 'floyd09'
 
-A 9-input network of depth 9 discovered by R. W. Floyd.
+A 9-input network of depth 9 discovered by R. W. Floyd. Of interest also
+because it is using what are essentially three-way comparators split into
+three sets of two-way comparators.
 
 =item 'senso09'
 
