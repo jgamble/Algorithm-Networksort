@@ -1,6 +1,16 @@
 Revision history for Perl extension Algorithm::Networksort.
 
-2.10
+2.02
+	Thu June 21 2018
+	- Changed colorsettings(), which wasn't following the
+	  documentation correctly.
+	- Encapsulated Postscript works again.
+	- Encapsulated Postscript now can have color.
+	- At some point when I was new to Perl, I learned the 
+	      unpack("B32", pack("N", $x))
+	  idiom, not realizing that sprintf() had added a "%b"
+	  flag to its format. Sigh. Made the changes everywhere.
+
 	Fri Feb  9 2018
 	- Keys 'radius' and 'stroke_width' of graphsettings() split
 	  into two each for the input lines and the comparator lines,
@@ -13,17 +23,10 @@ Revision history for Perl extension Algorithm::Networksort.
 	  with function textsettings(), as making graphsettings()
 	  handle it all was ridiculous, not to mention the key
 	  collisions with the changes above.
-	- Changed colorsettings(), which wasn't following the
-	  documentation correctly.
 	- Check for "monotone" diagrams. If all the colors are
 	  the same, just set the color once in the SVG or
 	  EPS output instead of setting the color for each part
-	  of the diagram. (If you want each color set even though
-	  the colors are the same, simply set each part's color
-	  in colorsettings(), then set 'foreground' to a different
-	  color. Since 'foreground' is used as a default, it
-	  won't change anything if there is nothing to default.)
-	- Encapsulated Postscript now can have color.
+	  of the diagram, resulting in a smaller file.
 	- Update the t/ and eg/ files to use the above changes.
 
 	Sun Jan 14 2018
